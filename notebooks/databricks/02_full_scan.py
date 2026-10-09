@@ -46,19 +46,26 @@ import datetime
 import os
 import sys
 
-# Running from a Git folder: import the scanner straight from this repository.
-# Otherwise fall back to installing it from GitHub.
-_repo_src = os.path.abspath(os.path.join(os.getcwd(), "..", "..", "src"))
-if os.path.isdir(os.path.join(_repo_src, "refdata_scanner")):
-    sys.path.insert(0, _repo_src)
+# Find the scanner package next to this notebook:
+#   Git folder clone of the repo  -> ../../src
+#   imported bundle (ZIP)         -> ./lib
+# If neither is present (e.g. imported from the .dbc archive), install it from GitHub.
+_SCANNER_ROOT_LEVELS = None  # how many folders up the scanner's own folder is (excluded from the scan)
+for _rel, _levels in ((os.path.join("..", "..", "src"), 2), ("lib", 0)):
+    _candidate = os.path.abspath(os.path.join(os.getcwd(), _rel))
+    if os.path.isdir(os.path.join(_candidate, "refdata_scanner")):
+        sys.path.insert(0, _candidate)
+        _SCANNER_ROOT_LEVELS = _levels
+        break
 try:
     import refdata_scanner  # noqa: F401
 except ImportError:
-    raise ImportError(
-        "refdata_scanner not found. Either open this notebook from a Git folder clone of "
-        "https://github.com/TitanRDM/refdata-scanner, or add a cell with:\n"
-        "  %pip install git+https://github.com/TitanRDM/refdata-scanner"
-    )
+    import subprocess
+
+    print("Installing refdata-scanner from GitHub ...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
+                           "git+https://github.com/TitanRDM/refdata-scanner"])
+    import refdata_scanner  # noqa: F401
 
 from refdata_scanner import ScanConfig, scan_databricks
 
@@ -80,14 +87,16 @@ config = ScanConfig(
     sample_values=0 if dbutils.widgets.get("redact") == "yes" else 5,
 )
 
-# Don't scan the scanner: skip the folder this repository was cloned into.
+# Don't scan the scanner: skip the folder its source code was imported into.
 exclude = _list("exclude_paths")
-try:
-    _nb_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
-    if "/notebooks/databricks/" in _nb_path:
-        exclude.append(_nb_path.split("/notebooks/databricks/")[0])
-except Exception:
-    pass
+if _SCANNER_ROOT_LEVELS is not None:
+    try:
+        _nb_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
+        _root = _nb_path.rsplit("/", 1 + _SCANNER_ROOT_LEVELS)[0]
+        if _root:
+            exclude.append(_root)
+    except Exception:
+        pass
 
 paths = scan_databricks(
     catalog=catalog,

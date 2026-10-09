@@ -42,10 +42,15 @@ read access to `system.access` and `system.query`, which a metastore admin may h
 
 ### 2. Full scan in a Databricks notebook (recommended)
 
-1. In your workspace, create a **Git folder** from `https://github.com/TitanRDM/refdata-scanner`
-   (Workspace > Create > Git folder).
-2. Open [`notebooks/databricks/02_full_scan.py`](notebooks/databricks/02_full_scan.py), attach serverless or any
-   Unity Catalog cluster, and run the first cells to create the widgets.
+1. Get the notebooks into your workspace, in one of three ways:
+   - **Import the bundle (easiest):** download `refdata-scanner-databricks.zip` from the
+     [latest release](https://github.com/TitanRDM/refdata-scanner/releases/latest), then in Databricks choose
+     Workspace > (folder menu) > Import > File and drop in the zip. You get a `refdata-scanner` folder with both
+     notebooks and the scanner code, so nothing is downloaded from GitHub at run time.
+   - **Import the DBC archive:** `refdata-scanner.dbc` from the same release contains the two notebooks only;
+     the full scan installs the scanner from GitHub on its first run. Use the zip if your clusters can't reach GitHub.
+   - **Git folder:** Workspace > Create > Git folder, with `https://github.com/TitanRDM/refdata-scanner`.
+2. Open `02_full_scan`, attach serverless or any Unity Catalog cluster, and run the first cells to create the widgets.
 3. Set the **catalog**, optional **schemas**, and the **workspace folders** to scan, then *Run all*.
 
 The report is shown in the notebook, and the inventories are displayed as sortable tables. Set the output folder to a
@@ -157,7 +162,11 @@ The scanners, analysis and reports are platform-neutral; a new platform only nee
 pip install -e ".[dev]"
 pytest
 refdata-scanner local examples/demo-workspace --inspect-files --out /tmp/demo
+python scripts/build_databricks_bundle.py   # builds dist/refdata-scanner-databricks.zip and dist/refdata-scanner.dbc
 ```
+
+The `databricks-bundle` workflow builds both bundles on every push to `main` (as a workflow artifact) and attaches
+them to the GitHub release whenever a `v*` tag is pushed.
 
 ## About
 
