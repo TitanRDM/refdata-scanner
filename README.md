@@ -54,10 +54,14 @@ read access to `system.access` and `system.query`, which a metastore admin may h
 The report is shown in the notebook, and the inventories are displayed as sortable tables. Set the output folder to a
 volume (for example `/Volumes/main/default/scans`) to keep and download the files.
 
-The notebook installs nothing and downloads nothing: everything it runs is in the folder you imported, which you
-can read before running it. You can also clone the repository as a **Git folder** instead of importing the zip;
-the notebook then loads the scanner from `src/`, and uses sqlglot if your cluster already has it (otherwise SQL is
-scanned with pattern matching, which is less precise).
+With the zip, the notebook installs nothing and downloads nothing: everything it runs is in the folder you
+imported, which you can read before running it.
+
+You can also clone the repository as a **Git folder** instead of importing the zip. The notebook then loads the
+scanner from `src/`. The repository does not include sqlglot, so if the cluster doesn't already have it, the notebook
+installs it with `pip` from the package index your workspace uses (PyPI or your organisation's mirror). That is the
+only thing the scanner ever installs; set the *Install sqlglot* widget to `no` to skip it, in which case SQL is
+scanned with pattern matching, which is less precise.
 
 No credentials to configure: inside a notebook the scanner uses your own identity, so it only sees what you can see.
 
@@ -108,9 +112,10 @@ sequences. They stay in `code_findings.csv` with a `noise_reason`.
 - **Read-only.** The scanner lists and reads; it never creates, changes or deletes anything on your platform.
 - **Metadata and code only.** File contents are not read unless you turn on `inspect files`, and even then only the
   header row and a row estimate are kept.
-- **Nothing leaves your environment.** No telemetry, no installs, no downloads. The only network calls are to your
-  own platform's APIs, using your own identity. A test (`tests/test_no_outbound_calls.py`) fails the build if any
-  other route out is added.
+- **Nothing leaves your environment.** No telemetry and no downloads. The only network calls are to your own
+  platform's APIs, using your own identity. The single exception is the optional `pip install` of the sqlglot SQL
+  parser when running from a Git folder (see above); the zip bundle never needs it. A test
+  (`tests/test_no_outbound_calls.py`) fails the build if any other route out is added.
 - **Your permissions.** It runs as you, so results only include what your account can see.
 - **Shareable output.** `--redact` (or the *Redact* widget) removes literal values, comments and user names from every
   output, and `summary.json` never contains them.

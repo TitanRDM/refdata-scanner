@@ -2,6 +2,9 @@
 
 Platform APIs are reached only through the Databricks SDK (or Spark) that the user's own
 environment provides. This test fails if anyone adds another route out.
+
+The single sanctioned exception: 02_full_scan may pip-install the sqlglot parser when it is not
+bundled or already on the cluster (Git folder users), behind a widget the user can turn off.
 """
 import os
 import re
@@ -11,7 +14,7 @@ FORBIDDEN = [
     (re.compile(r"^\s*(import|from)\s+(requests|urllib|urllib3|http\.client|httpx|aiohttp|socket|subprocess|ftplib|smtplib)\b", re.M),
      "network or process import"),
     (re.compile(r"%pip\b|\bpip\.main\b|\bpip install\b(?![^\n]*refdata-scanner\[)", re.M), "package install"),
-    (re.compile(r"\bos\.system\(|\bos\.popen\(", re.M), "shell command"),
+    (re.compile(r"\bos\.system\(|\bos\.popen\(|\bsubprocess\.\w+\(", re.M), "shell command"),
     (re.compile(r"\burlopen\(|\.urlretrieve\(", re.M), "download"),
 ]
 
@@ -24,15 +27,35 @@ def _files():
                     yield os.path.join(root, f)
 
 
+# (file, exact source line) pairs that are allowed to match the patterns above.
+ALLOWED = {
+    ("notebooks/databricks/02_full_scan.py", "import subprocess"),
+    ("notebooks/databricks/02_full_scan.py",
+     'subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "sqlglot>=25"])'),
+}
+
+
 def test_no_outbound_calls_in_scanner_or_notebooks():
     problems = []
     for path in _files():
+        rel = os.path.relpath(path, ROOT).replace(os.sep, "/")
         text = open(path, encoding="utf-8").read()
+        lines = text.split("\n")
         for pattern, label in FORBIDDEN:
             for m in pattern.finditer(text):
-                line = text.count("\n", 0, m.start()) + 1
-                problems.append(f"{os.path.relpath(path, ROOT)}:{line}: {label}: {m.group(0).strip()}")
+                line_no = text.count("\n", 0, m.start()) + 1
+                if (rel, lines[line_no - 1].strip()) in ALLOWED:
+                    continue
+                problems.append(f"{rel}:{line_no}: {label}: {m.group(0).strip()}")
     assert not problems, "\n".join(problems)
+
+
+def test_sqlglot_install_is_optional_and_only_sqlglot():
+    text = open(os.path.join(ROOT, "notebooks", "databricks", "02_full_scan.py"), encoding="utf-8").read()
+    install = text.index('"pip", "install"')
+    guard = text.rfind('if dbutils.widgets.get("install_sqlglot") == "yes":', 0, install)
+    assert guard != -1, "the pip install must sit behind the install_sqlglot widget"
+    assert text.count("check_call(") == 1 and text.count("subprocess") == 2
 
 
 def test_scanner_works_without_sqlglot():

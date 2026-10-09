@@ -13,8 +13,10 @@
 # MAGIC
 # MAGIC **Safe to run:**
 # MAGIC * **Read-only.** It lists and reads; it never creates, changes or deletes anything in the workspace.
-# MAGIC * **Stays inside your workspace.** It only calls this workspace's own APIs. It installs nothing, downloads
-# MAGIC   nothing and sends nothing anywhere else. Everything it needs ships in the `lib` folder next to this notebook.
+# MAGIC * **Stays inside your workspace.** It only calls this workspace's own APIs and sends nothing anywhere else.
+# MAGIC   Everything it needs ships in the `lib` folder next to this notebook. The one exception: if the `sqlglot` SQL
+# MAGIC   parser is not in `lib` or on the cluster (for example when running from a Git folder), it is installed with
+# MAGIC   `pip` from your workspace's package index. Set widget 10 to `no` to skip that and scan SQL by pattern matching.
 # MAGIC * **Runs as you.** Results include only what your account can see.
 # MAGIC * **Metadata and code only.** File contents are read only if you opt in, and then only the header row.
 # MAGIC
@@ -37,6 +39,7 @@ dbutils.widgets.dropdown("inspect_files", "no", ["no", "yes"], "8. Read CSV/Exce
 dbutils.widgets.dropdown("redact", "no", ["no", "yes"], "9. Redact values and names")
 dbutils.widgets.text("min_list_items", "10", "Lists with more than N items")
 dbutils.widgets.text("min_case_branches", "5", "CASE with at least N branches")
+dbutils.widgets.dropdown("install_sqlglot", "yes", ["yes", "no"], "10. Install sqlglot if missing (pip)")
 
 # COMMAND ----------
 
@@ -44,9 +47,9 @@ import datetime
 import os
 import sys
 
-# Load the scanner from the files next to this notebook. Nothing is downloaded or installed.
+# Load the scanner from the files next to this notebook:
 #   imported bundle (ZIP)          -> ./lib   (includes the sqlglot SQL parser)
-#   Git folder clone of the repo   -> ../../src
+#   Git folder clone of the repo   -> ../../src  (sqlglot not included)
 _SCANNER_ROOT_LEVELS = None  # how many folders up the scanner's own folder is (excluded from the scan)
 for _rel, _levels in (("lib", 0), (os.path.join("..", "..", "src"), 2)):
     _candidate = os.path.abspath(os.path.join(os.getcwd(), _rel))
@@ -60,11 +63,22 @@ else:
         "https://github.com/TitanRDM/refdata-scanner/releases and open 02_full_scan from the imported folder."
     )
 
+# The SQL parser. Used from lib/ or the cluster if present; otherwise installed with pip from the package
+# index this workspace is configured to use (PyPI or your organisation's mirror). This is the only thing the
+# scanner ever installs, and only when widget 10 allows it.
 try:
     import sqlglot  # noqa: F401
 except ImportError:
-    print("Note: the sqlglot SQL parser is not available, so SQL is scanned with pattern matching (less precise).\n"
-          "The ZIP bundle includes sqlglot; or attach it to the cluster from your organisation's package source.")
+    if dbutils.widgets.get("install_sqlglot") == "yes":
+        import importlib
+        import subprocess
+
+        print("sqlglot not found next to the notebook or on the cluster; installing it with pip ...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "sqlglot>=25"])
+        importlib.invalidate_caches()
+        import sqlglot  # noqa: F401
+    else:
+        print("Note: sqlglot is not available, so SQL is scanned with pattern matching (less precise).")
 
 from refdata_scanner import ScanConfig, scan_databricks
 
