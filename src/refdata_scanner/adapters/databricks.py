@@ -276,8 +276,12 @@ class DatabricksAdapter(PlatformAdapter):
                     try:
                         entries = list(self.w.files.list_directory_contents(d))
                     except Exception as exc:
-                        self.warn(f"Could not list {d}: {exc}")
-                        continue
+                        # Older SDKs lack the Files API; inside Databricks the volume is also mounted
+                        # at the same /Volumes path, so read the listing from there instead.
+                        entries = _local_listing(d)
+                        if entries is None:
+                            self.warn(f"Could not list {d}: {exc}")
+                            continue
                     for e in entries:
                         if e.is_directory:
                             stack.append(e.path.rstrip("/"))
@@ -361,11 +365,16 @@ class DatabricksAdapter(PlatformAdapter):
         if self.include_queries:
             try:
                 for q in self.w.queries.list():
-                    if not q.query_text:
+                    # Newer SDKs: query_text / display_name. Older SDKs (legacy queries API): query / name.
+                    text = getattr(q, "query_text", None) or getattr(q, "query", None)
+                    if not text:
                         continue
-                    yield CodeAsset(path=f"query: {q.display_name or q.id}", kind="query", language="sql",
-                                    content=q.query_text, owner=q.owner_user_name or q.last_modifier_user_name,
-                                    modified_at=str(q.update_time) if q.update_time else None, location="SQL queries")
+                    name = getattr(q, "display_name", None) or getattr(q, "name", None) or q.id
+                    owner = (getattr(q, "owner_user_name", None) or getattr(q, "last_modifier_user_name", None)
+                             or getattr(getattr(q, "user", None), "email", None))
+                    updated = getattr(q, "update_time", None) or getattr(q, "updated_at", None)
+                    yield CodeAsset(path=f"query: {name}", kind="query", language="sql", content=text, owner=owner,
+                                    modified_at=str(updated) if updated else None, location="SQL queries")
             except Exception as exc:
                 self.warn(f"Could not list saved SQL queries: {exc}")
 
@@ -463,6 +472,25 @@ class DatabricksAdapter(PlatformAdapter):
             loads.setdefault(r["source_path"], []).append(target)
         self.log(f"  lineage: {len(loads)} CSV/Excel file(s) loaded into tables")
         return loads
+
+
+def _local_listing(directory: str):
+    """List a /Volumes directory through the local mount. Returns None if it is not mounted."""
+    import os
+    from types import SimpleNamespace
+
+    if not os.path.isdir(directory):
+        return None
+    out = []
+    try:
+        with os.scandir(directory) as it:
+            for e in it:
+                st = e.stat()
+                out.append(SimpleNamespace(path=e.path, name=e.name, is_directory=e.is_dir(), file_size=st.st_size,
+                                           last_modified=int(st.st_mtime * 1000)))
+    except OSError:
+        return None
+    return out
 
 
 def _short_err(exc: Exception) -> str:

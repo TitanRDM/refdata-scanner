@@ -11,20 +11,18 @@
 # MAGIC   workspace files, saved SQL queries and views
 # MAGIC * **Duplicates and drift**: the same list or mapping copied into several places, and copies that disagree
 # MAGIC
-# MAGIC **Safe to run:** read-only, reads metadata and code (file contents only if you opt in), sends nothing outside
-# MAGIC your workspace. Results include only what *your* account can see. Source code:
-# MAGIC https://github.com/TitanRDM/refdata-scanner
+# MAGIC **Safe to run:**
+# MAGIC * **Read-only.** It lists and reads; it never creates, changes or deletes anything in the workspace.
+# MAGIC * **Stays inside your workspace.** It only calls this workspace's own APIs. It installs nothing, downloads
+# MAGIC   nothing and sends nothing anywhere else. Everything it needs ships in the `lib` folder next to this notebook.
+# MAGIC * **Runs as you.** Results include only what your account can see.
+# MAGIC * **Metadata and code only.** File contents are read only if you opt in, and then only the header row.
 # MAGIC
-# MAGIC **How to run:** attach to serverless or any Unity Catalog cluster, run the first cell to create the widgets,
-# MAGIC fill them in, then *Run all*. A typical workspace takes a few minutes.
-
-# COMMAND ----------
-
-# MAGIC %pip install -q "sqlglot>=25" "openpyxl>=3.1" "databricks-sdk>=0.38"
-
-# COMMAND ----------
-
-dbutils.library.restartPython()
+# MAGIC Source code: https://github.com/TitanRDM/refdata-scanner
+# MAGIC
+# MAGIC **How to run:** attach to serverless or a Unity Catalog cluster (Databricks Runtime 15.4 LTS or later
+# MAGIC recommended), run the next cell to create the widgets, fill them in, then *Run all*.
+# MAGIC A typical workspace takes a few minutes.
 
 # COMMAND ----------
 
@@ -46,26 +44,27 @@ import datetime
 import os
 import sys
 
-# Find the scanner package next to this notebook:
-#   Git folder clone of the repo  -> ../../src
-#   imported bundle (ZIP)         -> ./lib
-# If neither is present (e.g. imported from the .dbc archive), install it from GitHub.
+# Load the scanner from the files next to this notebook. Nothing is downloaded or installed.
+#   imported bundle (ZIP)          -> ./lib   (includes the sqlglot SQL parser)
+#   Git folder clone of the repo   -> ../../src
 _SCANNER_ROOT_LEVELS = None  # how many folders up the scanner's own folder is (excluded from the scan)
-for _rel, _levels in ((os.path.join("..", "..", "src"), 2), ("lib", 0)):
+for _rel, _levels in (("lib", 0), (os.path.join("..", "..", "src"), 2)):
     _candidate = os.path.abspath(os.path.join(os.getcwd(), _rel))
     if os.path.isdir(os.path.join(_candidate, "refdata_scanner")):
         sys.path.insert(0, _candidate)
         _SCANNER_ROOT_LEVELS = _levels
         break
-try:
-    import refdata_scanner  # noqa: F401
-except ImportError:
-    import subprocess
+else:
+    raise RuntimeError(
+        "Scanner code not found next to this notebook. Import refdata-scanner-databricks.zip from "
+        "https://github.com/TitanRDM/refdata-scanner/releases and open 02_full_scan from the imported folder."
+    )
 
-    print("Installing refdata-scanner from GitHub ...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
-                           "git+https://github.com/TitanRDM/refdata-scanner"])
-    import refdata_scanner  # noqa: F401
+try:
+    import sqlglot  # noqa: F401
+except ImportError:
+    print("Note: the sqlglot SQL parser is not available, so SQL is scanned with pattern matching (less precise).\n"
+          "The ZIP bundle includes sqlglot; or attach it to the cluster from your organisation's package source.")
 
 from refdata_scanner import ScanConfig, scan_databricks
 

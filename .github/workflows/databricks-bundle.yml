@@ -1,6 +1,6 @@
 name: databricks-bundle
 
-# Builds the importable Databricks bundles (.zip and .dbc).
+# Builds the importable Databricks bundle (refdata-scanner-databricks.zip).
 # Every push to main: available as a workflow artifact.
 # Every version tag (v0.1.0, ...): also attached to the GitHub release.
 
@@ -23,18 +23,14 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
-      - run: pytest -q tests/test_databricks_bundle.py
+      - run: pytest -q tests/test_databricks_bundle.py tests/test_no_outbound_calls.py
       - run: python scripts/build_databricks_bundle.py --out dist
       - uses: actions/upload-artifact@v4
         with:
           name: refdata-scanner-databricks
-          path: |
-            dist/refdata-scanner-databricks.zip
-            dist/refdata-scanner.dbc
+          path: dist/refdata-scanner-databricks.zip
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist/refdata-scanner-databricks.zip
-            dist/refdata-scanner.dbc
+          files: dist/refdata-scanner-databricks.zip

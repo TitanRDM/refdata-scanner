@@ -42,19 +42,22 @@ read access to `system.access` and `system.query`, which a metastore admin may h
 
 ### 2. Full scan in a Databricks notebook (recommended)
 
-1. Get the notebooks into your workspace, in one of three ways:
-   - **Import the bundle (easiest):** download `refdata-scanner-databricks.zip` from the
-     [latest release](https://github.com/TitanRDM/refdata-scanner/releases/latest), then in Databricks choose
-     Workspace > (folder menu) > Import > File and drop in the zip. You get a `refdata-scanner` folder with both
-     notebooks and the scanner code, so nothing is downloaded from GitHub at run time.
-   - **Import the DBC archive:** `refdata-scanner.dbc` from the same release contains the two notebooks only;
-     the full scan installs the scanner from GitHub on its first run. Use the zip if your clusters can't reach GitHub.
-   - **Git folder:** Workspace > Create > Git folder, with `https://github.com/TitanRDM/refdata-scanner`.
-2. Open `02_full_scan`, attach serverless or any Unity Catalog cluster, and run the first cells to create the widgets.
-3. Set the **catalog**, optional **schemas**, and the **workspace folders** to scan, then *Run all*.
+1. Download `refdata-scanner-databricks.zip` from the
+   [latest release](https://github.com/TitanRDM/refdata-scanner/releases/latest).
+2. In Databricks, open the folder you want it in, choose **Import > File** and drop in the zip. You get a
+   `refdata-scanner` folder with both notebooks and a `lib` folder holding the scanner and the
+   [sqlglot](https://github.com/tobymao/sqlglot) SQL parser it uses (MIT licence, included unmodified).
+3. Open `02_full_scan`, attach serverless or a Unity Catalog cluster (Databricks Runtime 15.4 LTS or later
+   recommended), and run the first cell to create the widgets.
+4. Set the **catalog**, optional **schemas**, and the **workspace folders** to scan, then *Run all*.
 
 The report is shown in the notebook, and the inventories are displayed as sortable tables. Set the output folder to a
 volume (for example `/Volumes/main/default/scans`) to keep and download the files.
+
+The notebook installs nothing and downloads nothing: everything it runs is in the folder you imported, which you
+can read before running it. You can also clone the repository as a **Git folder** instead of importing the zip;
+the notebook then loads the scanner from `src/`, and uses sqlglot if your cluster already has it (otherwise SQL is
+scanned with pattern matching, which is less precise).
 
 No credentials to configure: inside a notebook the scanner uses your own identity, so it only sees what you can see.
 
@@ -105,12 +108,14 @@ sequences. They stay in `code_findings.csv` with a `noise_reason`.
 - **Read-only.** The scanner lists and reads; it never creates, changes or deletes anything on your platform.
 - **Metadata and code only.** File contents are not read unless you turn on `inspect files`, and even then only the
   header row and a row estimate are kept.
-- **Nothing leaves your environment.** No telemetry, no network calls except to your own platform's APIs.
+- **Nothing leaves your environment.** No telemetry, no installs, no downloads. The only network calls are to your
+  own platform's APIs, using your own identity. A test (`tests/test_no_outbound_calls.py`) fails the build if any
+  other route out is added.
 - **Your permissions.** It runs as you, so results only include what your account can see.
 - **Shareable output.** `--redact` (or the *Redact* widget) removes literal values, comments and user names from every
   output, and `summary.json` never contains them.
-- **Small and readable.** Plain Python with two dependencies (`sqlglot` for SQL parsing and the Databricks SDK).
-  Read it before you run it.
+- **Small and readable.** Plain Python. Its only dependencies are `sqlglot` (bundled) for SQL parsing and the
+  Databricks SDK that Databricks already provides. Read it before you run it.
 
 ## Thresholds
 
@@ -162,11 +167,12 @@ The scanners, analysis and reports are platform-neutral; a new platform only nee
 pip install -e ".[dev]"
 pytest
 refdata-scanner local examples/demo-workspace --inspect-files --out /tmp/demo
-python scripts/build_databricks_bundle.py   # builds dist/refdata-scanner-databricks.zip and dist/refdata-scanner.dbc
+python scripts/build_databricks_bundle.py   # builds dist/refdata-scanner-databricks.zip
 ```
 
-The `databricks-bundle` workflow builds both bundles on every push to `main` (as a workflow artifact) and attaches
-them to the GitHub release whenever a `v*` tag is pushed.
+The `databricks-bundle` workflow builds the bundle on every push to `main` (as a workflow artifact) and attaches
+it to the GitHub release whenever a `v*` tag is pushed. There is deliberately no `.dbc` archive: a DBC can only
+hold notebooks, so the scanner would have to be downloaded at run time.
 
 ## About
 
