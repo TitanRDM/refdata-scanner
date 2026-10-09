@@ -1,0 +1,5 @@
+score,priority,path,name,type,area,container,size_bytes,modified,owner,dbt_seed,referenced_by,loaded_into,header,row_estimate,sheets,reasons
+95,High,/Repos/analytics/dbt_project/seeds/country_codes.csv,country_codes.csv,.csv,local,/Repos/analytics/dbt_project/seeds,89,2026-10-09,,yes,,,country_code|country_name,4,,dbt seed (reference data by definition); reference-data style name; small file
+90,High,/Shared/finance/gl_account_mapping.xlsx,gl_account_mapping.xlsx,.xlsx,local,/Shared/finance,5372,2026-10-09,,,/Shared/finance/finance_report.py:25,,gl_account|description|report_line,3,2,reference-data style name; read by 1 code location(s); small file; spreadsheet (likely maintained by hand)
+80,High,/FileStore/tables/cost_centres.csv,cost_centres.csv,.csv,local,/FileStore/tables,79,2026-10-09,,,,,cost_centre|name|owner,3,,reference-data style name; manual upload location; small file
+80,High,/FileStore/tables/product_categories.csv,product_categories.csv,.csv,local,/FileStore/tables,50,2026-10-09,,,,,product_code|category,2,,reference-data style name; manual upload location; small file

@@ -1,0 +1,111 @@
+<!doctype html><html lang='en'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>Reference Data Scan</title><style>
+
+:root{--bg:#f7f8fa;--card:#fff;--ink:#1c2230;--muted:#5b6475;--line:#e3e6ec;--accent:#1f5eff;--high:#c2410c;--med:#a16207;--low:#64748b;--warn-bg:#fff4e5}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1218;--card:#171b23;--ink:#e6e9ef;--muted:#9aa3b2;--line:#2a303b;--accent:#6b9bff;--high:#fb923c;--med:#facc15;--low:#94a3b8;--warn-bg:#2a2013}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:32px 20px 60px}
+h1{font-size:28px;margin:0 0 4px}h2{font-size:19px;margin:36px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.scope{color:var(--muted);font-size:13px;margin-bottom:22px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.card .n{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}.card .l{color:var(--muted);font-size:12.5px}
+.card.alert .n{color:var(--high)}
+ul{padding-left:20px}li{margin:5px 0}
+.tbl{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{position:sticky;top:0;background:var(--card);color:var(--muted);font-weight:600;white-space:nowrap}
+tr:last-child td{border-bottom:none}td.path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;word-break:break-all}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid currentColor}
+.High{color:var(--high)}.Medium{color:var(--med)}.Low{color:var(--low)}
+.note{color:var(--muted);font-size:12.5px;margin-top:6px}
+.cta{margin-top:36px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:16px 20px}
+a{color:var(--accent)}footer{color:var(--muted);font-size:12.5px;margin-top:40px}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92em}
+
+</style></head><body><main>
+<h1>Reference Data Scan</h1>
+<div class='scope'>Platform: Local | Paths: examples/demo-workspace | Scanned: 2026-10-09 05:48 UTC</div>
+<div class='cards'>
+<div class='card'><div class='n'>11</div><div class='l'>Reference data sets (estimated)</div></div>
+<div class='card'><div class='n'>4</div><div class='l'>CSV / Excel files</div></div>
+<div class='card'><div class='n'>0</div><div class='l'>Lookup-table candidates</div></div>
+<div class='card'><div class='n'>10</div><div class='l'>Hardcoded lists &amp; mappings</div></div>
+<div class='card'><div class='n'>76</div><div class='l'>Hardcoded values in code</div></div>
+<div class='card'><div class='n'>1</div><div class='l'>Sets copied in 2+ places</div></div>
+<div class='card alert'><div class='n'>1</div><div class='l'>Copies that disagree</div></div>
+</div>
+<h2>Key findings</h2>
+<ul><li><strong>4 of 4 code assets</strong> (notebooks, files, queries and views; 100%) contain hardcoded reference data, 76 values in total.</li><li><strong>1 reference set</strong> is copied into more than one place. The most widespread (<code>STATE_MAP</code>) appears in <strong>4 places</strong>.</li><li><strong>1 copied set</strong> no longer agrees with its other copies: the same code maps to a different value depending on which notebook or query you run. This is reference data drift. For example, in <code>STATE_MAP</code>: ACT: ACT vs Australian Capital Territory.</li><li><strong>4 CSV/Excel files</strong> found in the platform, including 1 spreadsheet that is typically edited by hand. 1 file is read directly by code, so a manual edit flows straight into pipelines. 3 files are not referenced by any scanned code.</li><li><strong>1 dbt seed file</strong>: reference data kept as CSV in a code repository, changed through pull requests rather than by the people who own it.</li><li>The largest hardcoded set has <strong>12 entries</strong> (Python list, <code>COST_CENTRES</code>).</li></ul>
+<h2>Duplicated reference data and drift</h2>
+<p>The same list or mapping hardcoded in several places. Each copy has to be updated by hand when the reference data changes, and copies that disagree mean reports and pipelines quietly produce different answers.</p>
+<div class='tbl'><table><thead><tr><th>Group</th><th>Name</th><th>Copies</th><th>Items</th><th>Status</th><th>Locations</th><th>Where copies disagree</th></tr></thead><tbody>
+<tr><td>G001</td><td>STATE_MAP</td><td>4</td><td>8</td><td>Copies disagree</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:14<br>/Shared/finance/finance_report.py:5<br>/Shared/finance/region_rollup.sql:12<br>/Users/jane.doe@contoso.com/sales_transform.py:10</td><td>ACT: ACT vs Australian Capital Territory<br>WA: West Australia vs Western Australia</td></tr>
+</tbody></table></div>
+<h2>Top candidates for a managed reference data service</h2>
+<p>Ranked by how likely each item is to be reference data and how much risk it carries. Scores: 60+ High, 35-59 Medium.</p>
+<div class='tbl'><table><thead><tr><th>Score</th><th>Priority</th><th>Type</th><th>Where</th><th>What</th><th>Name</th><th>Why</th></tr></thead><tbody>
+<tr><td>95</td><td><span class='pill High'>High</span></td><td>File</td><td class='path'>/Repos/analytics/dbt_project/seeds/country_codes.csv</td><td>csv</td><td></td><td>dbt seed (reference data by definition); reference-data style name; small file</td></tr>
+<tr><td>90</td><td><span class='pill High'>High</span></td><td>File</td><td class='path'>/Shared/finance/gl_account_mapping.xlsx</td><td>xlsx</td><td></td><td>reference-data style name; read by 1 code location(s); small file; spreadsheet (likely maintained by hand)</td></tr>
+<tr><td>84</td><td><span class='pill High'>High</span></td><td>Code</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:14</td><td>SQL CASE mapping</td><td>state_name</td><td>hardcoded mapping; reference-data style name; values look like codes; repeated in 4 places; copies disagree</td></tr>
+<tr><td>84</td><td><span class='pill High'>High</span></td><td>Code</td><td class='path'>/Shared/finance/finance_report.py:5</td><td>Python dict (code -&gt; label)</td><td>STATE_MAP</td><td>hardcoded mapping; reference-data style name; values look like codes; repeated in 4 places; copies disagree</td></tr>
+<tr><td>84</td><td><span class='pill High'>High</span></td><td>Code</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:10</td><td>Python dict (code -&gt; label)</td><td>STATE_MAP</td><td>hardcoded mapping; reference-data style name; values look like codes; repeated in 4 places; copies disagree</td></tr>
+<tr><td>80</td><td><span class='pill High'>High</span></td><td>File</td><td class='path'>/FileStore/tables/cost_centres.csv</td><td>csv</td><td></td><td>reference-data style name; manual upload location; small file</td></tr>
+<tr><td>80</td><td><span class='pill High'>High</span></td><td>File</td><td class='path'>/FileStore/tables/product_categories.csv</td><td>csv</td><td></td><td>reference-data style name; manual upload location; small file</td></tr>
+<tr><td>73</td><td><span class='pill High'>High</span></td><td>Code</td><td class='path'>/Shared/finance/region_rollup.sql:12</td><td>SQL CASE mapping</td><td>sales_region</td><td>hardcoded mapping; reference-data style name; values look like codes; repeated in 4 places</td></tr>
+<tr><td>58</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Shared/finance/finance_report.py:30</td><td>DataFrame built from literals</td><td>account_groups</td><td>hardcoded mapping; reference-data style name; values look like codes</td></tr>
+<tr><td>57</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:11</td><td>SQL CASE mapping</td><td>segment</td><td>hardcoded mapping; reference-data style name; values look like codes</td></tr>
+<tr><td>57</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Shared/finance/region_rollup.sql:23</td><td>SQL INSERT VALUES inside spark.sql()</td><td>main.reference.currency</td><td>hardcoded mapping; reference-data style name; values look like codes</td></tr>
+<tr><td>57</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:31</td><td>PySpark when() chain</td><td>channel</td><td>hardcoded mapping; reference-data style name; values look like codes</td></tr>
+<tr><td>46</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Shared/finance/finance_report.py:16</td><td>Python list</td><td>COST_CENTRES</td><td>hardcoded list; reference-data style name; values look like codes</td></tr>
+<tr><td>46</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:49</td><td>SQL IN (...) list</td><td>product_code</td><td>hardcoded list; reference-data style name; values look like codes</td></tr>
+</tbody></table></div>
+<h2>CSV and Excel files</h2>
+<div class='tbl'><table><thead><tr><th>Score</th><th>Path</th><th>Size</th><th>Modified</th><th>Owner</th><th>Read by code</th><th>Loaded into</th></tr></thead><tbody>
+<tr><td>95</td><td class='path'>/Repos/analytics/dbt_project/seeds/country_codes.csv</td><td>89 B</td><td>2026-10-09</td><td></td><td>-</td><td>-</td></tr>
+<tr><td>90</td><td class='path'>/Shared/finance/gl_account_mapping.xlsx</td><td>5.2 KB</td><td>2026-10-09</td><td></td><td>1</td><td>-</td></tr>
+<tr><td>80</td><td class='path'>/FileStore/tables/cost_centres.csv</td><td>79 B</td><td>2026-10-09</td><td></td><td>-</td><td>-</td></tr>
+<tr><td>80</td><td class='path'>/FileStore/tables/product_categories.csv</td><td>50 B</td><td>2026-10-09</td><td></td><td>-</td><td>-</td></tr>
+</tbody></table></div>
+<h2>Hardcoded reference data by pattern</h2>
+<div class='tbl'><table><thead><tr><th>Pattern</th><th>Count</th><th>Values</th></tr></thead><tbody>
+<tr><td>SQL CASE mapping</td><td>3</td><td>20</td></tr>
+<tr><td>Python dict (code -&gt; label)</td><td>2</td><td>16</td></tr>
+<tr><td>DataFrame built from literals</td><td>1</td><td>6</td></tr>
+<tr><td>SQL INSERT VALUES inside spark.sql()</td><td>1</td><td>5</td></tr>
+<tr><td>PySpark when() chain</td><td>1</td><td>5</td></tr>
+<tr><td>Python list</td><td>1</td><td>12</td></tr>
+<tr><td>SQL IN (...) list</td><td>1</td><td>12</td></tr>
+</tbody></table></div>
+<h2>Hardcoded lists and mappings in code</h2>
+<div class='tbl'><table><thead><tr><th>Score</th><th>Location</th><th>Pattern</th><th>Name</th><th>Items</th><th>Group</th><th>Sample</th></tr></thead><tbody>
+<tr><td>84</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:14</td><td>SQL CASE mapping</td><td>state_name</td><td>8</td><td>G001</td><td>NSW -&gt; New South Wales, QLD -&gt; Queensland, VIC -&gt; Victoria, SA -&gt; South Australia, WA -&gt; Western Australia, ... (+3)</td></tr>
+<tr><td>84</td><td class='path'>/Shared/finance/finance_report.py:5</td><td>Python dict (code -&gt; label)</td><td>STATE_MAP</td><td>8</td><td>G001</td><td>NSW -&gt; New South Wales, QLD -&gt; Queensland, VIC -&gt; Victoria, SA -&gt; South Australia, WA -&gt; West Australia, ... (+3)</td></tr>
+<tr><td>84</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:10</td><td>Python dict (code -&gt; label)</td><td>STATE_MAP</td><td>8</td><td>G001</td><td>NSW -&gt; New South Wales, QLD -&gt; Queensland, VIC -&gt; Victoria, SA -&gt; South Australia, WA -&gt; Western Australia, ... (+3)</td></tr>
+<tr><td>73</td><td class='path'>/Shared/finance/region_rollup.sql:12</td><td>SQL CASE mapping</td><td>sales_region</td><td>7</td><td>G001</td><td>NSW -&gt; East, VIC -&gt; East, QLD -&gt; North, NT -&gt; North, WA -&gt; West, ... (+2)</td></tr>
+<tr><td>58</td><td class='path'>/Shared/finance/finance_report.py:30</td><td>DataFrame built from literals</td><td>account_groups</td><td>6</td><td></td><td>4000 -&gt; Revenue, 4100 -&gt; Revenue, 5000 -&gt; Cost of Sales, 6000 -&gt; Operating Expenses, 6100 -&gt; Operating Expenses, ... (+1)</td></tr>
+<tr><td>57</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:11</td><td>SQL CASE mapping</td><td>segment</td><td>5</td><td></td><td>E -&gt; Enterprise, M -&gt; Mid-market, S -&gt; Small business, C -&gt; Consumer, G -&gt; Government</td></tr>
+<tr><td>57</td><td class='path'>/Shared/finance/region_rollup.sql:23</td><td>SQL INSERT VALUES inside spark.sql()</td><td>main.reference.currency</td><td>5</td><td></td><td>AUD -&gt; Australian Dollar, NZD -&gt; New Zealand Dollar, USD -&gt; US Dollar, EUR -&gt; Euro, GBP -&gt; Pound Sterling</td></tr>
+<tr><td>57</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:31</td><td>PySpark when() chain</td><td>channel</td><td>5</td><td></td><td>01 -&gt; Retail, 02 -&gt; Wholesale, 03 -&gt; Online, 04 -&gt; Marketplace, 05 -&gt; Phone</td></tr>
+<tr><td>46</td><td class='path'>/Shared/finance/finance_report.py:16</td><td>Python list</td><td>COST_CENTRES</td><td>12</td><td></td><td>CC100, CC110, CC120, CC130, CC200, ... (+7)</td></tr>
+<tr><td>46</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:49</td><td>SQL IN (...) list</td><td>product_code</td><td>12</td><td></td><td>P100, P101, P102, P103, P104, ... (+7)</td></tr>
+</tbody></table></div>
+<h2>Hotspots by location</h2>
+<div class='tbl'><table><thead><tr><th>Location</th><th>Files</th><th>Tables</th><th>Code</th><th>Total</th></tr></thead><tbody>
+<tr><td class='path'>/Shared/finance</td><td>1</td><td>0</td><td>5</td><td>6</td></tr>
+<tr><td class='path'>/Users/jane.doe@contoso.com</td><td>0</td><td>0</td><td>3</td><td>3</td></tr>
+<tr><td class='path'>/Repos/analytics/dbt_project/models</td><td>0</td><td>0</td><td>2</td><td>2</td></tr>
+<tr><td class='path'>/FileStore/tables</td><td>2</td><td>0</td><td>0</td><td>2</td></tr>
+<tr><td class='path'>/Repos/analytics/dbt_project/seeds</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+</tbody></table></div>
+<h2>What this means</h2>
+<ul><li><strong>Changes need a developer.</strong> Business users cannot update a hardcoded mapping; every change is a code change and a deployment.</li><li><strong>No single source of truth.</strong> Copies drift apart, so the same code means different things in different reports.</li><li><strong>No audit trail.</strong> Spreadsheets and code literals have no approval workflow, effective dates or history of who changed what.</li><li><strong>Hidden risk.</strong> Hand-edited files that feed pipelines directly can break them, or silently change results.</li></ul>
+<div class='cta'>
+<h3>Next steps</h3>
+<ul><li>Pick the high-priority sets, especially those that are duplicated or disagree, and agree one owner for each.</li><li>Move them into a managed reference data service with approval workflows, versioning and an API, and replace the hardcoded copies with a lookup.</li><li><a href="https://titanrdm.com">TitanRDM</a> is a reference data management service built for exactly this: business users maintain the data, and your pipelines read it from Databricks, Snowflake or Fabric.</li></ul>
+</div>
+<h2>How this was produced</h2>
+<ul><li>Scanned 0 tables, 4 code assets and 4 CSV/Excel files.</li><li>Thresholds: lists with more than 10 items; mappings with 5+ entries; CASE statements with 5+ branches; inline tables with 3+ rows.</li><li>2 findings were set aside as probable column lists or configuration (listed in code_findings.csv with a noise_reason).</li><li>Results only include what the account running the scan is allowed to see.</li><li>The scanner is read-only, reads metadata and code only (file contents only if you opted in), and makes no network calls outside your platform.</li></ul>
+<footer>Generated by <a href='https://github.com/TitanRDM/refdata-scanner'>refdata-scanner</a>, an open-source tool from <a href='https://titanrdm.com'>TitanRDM</a>. Detailed inventories are in the CSV files next to this report.</footer>
+</main></body></html>

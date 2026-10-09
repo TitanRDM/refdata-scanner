@@ -1,0 +1,860 @@
+{
+ "platform": "local",
+ "scope": {
+  "paths": [
+   "examples/demo-workspace"
+  ]
+ },
+ "started_at": "2026-10-09T05:48:15+00:00",
+ "finished_at": "2026-10-09T05:48:15+00:00",
+ "run_by": null,
+ "files": [
+  {
+   "path": "/Repos/analytics/dbt_project/seeds/country_codes.csv",
+   "name": "country_codes.csv",
+   "extension": ".csv",
+   "area": "local",
+   "container": "/Repos/analytics/dbt_project/seeds",
+   "size_bytes": 89,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "owner": null,
+   "referenced_by": [],
+   "loaded_into": [],
+   "header": [
+    "country_code",
+    "country_name"
+   ],
+   "row_estimate": 4,
+   "sheet_count": null,
+   "is_dbt_seed": true,
+   "score": 95,
+   "reasons": [
+    "dbt seed (reference data by definition)",
+    "reference-data style name",
+    "small file"
+   ]
+  },
+  {
+   "path": "/Shared/finance/gl_account_mapping.xlsx",
+   "name": "gl_account_mapping.xlsx",
+   "extension": ".xlsx",
+   "area": "local",
+   "container": "/Shared/finance",
+   "size_bytes": 5372,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "owner": null,
+   "referenced_by": [
+    "/Shared/finance/finance_report.py:25"
+   ],
+   "loaded_into": [],
+   "header": [
+    "gl_account",
+    "description",
+    "report_line"
+   ],
+   "row_estimate": 3,
+   "sheet_count": 2,
+   "is_dbt_seed": false,
+   "score": 90,
+   "reasons": [
+    "reference-data style name",
+    "read by 1 code location(s)",
+    "small file",
+    "spreadsheet (likely maintained by hand)"
+   ]
+  },
+  {
+   "path": "/FileStore/tables/cost_centres.csv",
+   "name": "cost_centres.csv",
+   "extension": ".csv",
+   "area": "local",
+   "container": "/FileStore/tables",
+   "size_bytes": 79,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "owner": null,
+   "referenced_by": [],
+   "loaded_into": [],
+   "header": [
+    "cost_centre",
+    "name",
+    "owner"
+   ],
+   "row_estimate": 3,
+   "sheet_count": null,
+   "is_dbt_seed": false,
+   "score": 80,
+   "reasons": [
+    "reference-data style name",
+    "manual upload location",
+    "small file"
+   ]
+  },
+  {
+   "path": "/FileStore/tables/product_categories.csv",
+   "name": "product_categories.csv",
+   "extension": ".csv",
+   "area": "local",
+   "container": "/FileStore/tables",
+   "size_bytes": 50,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "owner": null,
+   "referenced_by": [],
+   "loaded_into": [],
+   "header": [
+    "product_code",
+    "category"
+   ],
+   "row_estimate": 2,
+   "sheet_count": null,
+   "is_dbt_seed": false,
+   "score": 80,
+   "reasons": [
+    "reference-data style name",
+    "manual upload location",
+    "small file"
+   ]
+  }
+ ],
+ "tables": [],
+ "code_findings": [
+  {
+   "source_path": "/Repos/analytics/dbt_project/models/stg_customers.sql",
+   "source_kind": "dbt_model",
+   "language": "sql",
+   "line": 14,
+   "pattern": "sql_case",
+   "shape": "mapping",
+   "item_count": 8,
+   "name": "state_name",
+   "values": [
+    "NSW",
+    "QLD",
+    "VIC",
+    "SA",
+    "WA",
+    "TAS",
+    "NT",
+    "ACT"
+   ],
+   "pairs": [
+    [
+     "NSW",
+     "New South Wales"
+    ],
+    [
+     "QLD",
+     "Queensland"
+    ],
+    [
+     "VIC",
+     "Victoria"
+    ],
+    [
+     "SA",
+     "South Australia"
+    ],
+    [
+     "WA",
+     "Western Australia"
+    ],
+    [
+     "TAS",
+     "Tasmania"
+    ],
+    [
+     "NT",
+     "Northern Territory"
+    ],
+    [
+     "ACT",
+     "ACT"
+    ]
+   ],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Repos/analytics/dbt_project/models",
+   "in_job": false,
+   "snippet": "CASE WHEN state = 'NSW' THEN 'New South Wales' WHEN state = 'QLD' THEN 'Queensland' WHEN state = 'VIC' THEN 'Victoria' WHEN state = 'SA' THEN 'South Australia' WHEN state = 'WA' THEN 'Western Australia' WHEN state = 'TAS' THEN 'Tasmania' WH...",
+   "id": "C00002",
+   "fingerprint": "f758dabb36e2",
+   "group_id": "G001",
+   "group_conflict": true,
+   "likely_noise": null,
+   "score": 84,
+   "reasons": [
+    "hardcoded mapping",
+    "reference-data style name",
+    "values look like codes",
+    "repeated in 4 places",
+    "copies disagree"
+   ]
+  },
+  {
+   "source_path": "/Shared/finance/finance_report.py",
+   "source_kind": "notebook",
+   "language": "python",
+   "line": 5,
+   "pattern": "python_dict",
+   "shape": "mapping",
+   "item_count": 8,
+   "name": "STATE_MAP",
+   "values": [
+    "NSW",
+    "QLD",
+    "VIC",
+    "SA",
+    "WA",
+    "TAS",
+    "NT",
+    "ACT"
+   ],
+   "pairs": [
+    [
+     "NSW",
+     "New South Wales"
+    ],
+    [
+     "QLD",
+     "Queensland"
+    ],
+    [
+     "VIC",
+     "Victoria"
+    ],
+    [
+     "SA",
+     "South Australia"
+    ],
+    [
+     "WA",
+     "West Australia"
+    ],
+    [
+     "TAS",
+     "Tasmania"
+    ],
+    [
+     "NT",
+     "Northern Territory"
+    ],
+    [
+     "ACT",
+     "Australian Capital Territory"
+    ]
+   ],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Shared/finance",
+   "in_job": false,
+   "snippet": "{ \"NSW\": \"New South Wales\", \"QLD\": \"Queensland\", \"VIC\": \"Victoria\", \"SA\": \"South Australia\", \"WA\": \"West Australia\", \"TAS\": \"Tasmania\", \"NT\": \"Northern Territory\", \"ACT\": \"Australian Capital Territory\", }",
+   "id": "C00003",
+   "fingerprint": "f758dabb36e2",
+   "group_id": "G001",
+   "group_conflict": true,
+   "likely_noise": null,
+   "score": 84,
+   "reasons": [
+    "hardcoded mapping",
+    "reference-data style name",
+    "values look like codes",
+    "repeated in 4 places",
+    "copies disagree"
+   ]
+  },
+  {
+   "source_path": "/Users/jane.doe@contoso.com/sales_transform.py",
+   "source_kind": "notebook",
+   "language": "python",
+   "line": 10,
+   "pattern": "python_dict",
+   "shape": "mapping",
+   "item_count": 8,
+   "name": "STATE_MAP",
+   "values": [
+    "NSW",
+    "QLD",
+    "VIC",
+    "SA",
+    "WA",
+    "TAS",
+    "NT",
+    "ACT"
+   ],
+   "pairs": [
+    [
+     "NSW",
+     "New South Wales"
+    ],
+    [
+     "QLD",
+     "Queensland"
+    ],
+    [
+     "VIC",
+     "Victoria"
+    ],
+    [
+     "SA",
+     "South Australia"
+    ],
+    [
+     "WA",
+     "Western Australia"
+    ],
+    [
+     "TAS",
+     "Tasmania"
+    ],
+    [
+     "NT",
+     "Northern Territory"
+    ],
+    [
+     "ACT",
+     "Australian Capital Territory"
+    ]
+   ],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Users/jane.doe@contoso.com",
+   "in_job": false,
+   "snippet": "{ \"NSW\": \"New South Wales\", \"QLD\": \"Queensland\", \"VIC\": \"Victoria\", \"SA\": \"South Australia\", \"WA\": \"Western Australia\", \"TAS\": \"Tasmania\", \"NT\": \"Northern Territory\", \"ACT\": \"Australian Capital Territory\", }",
+   "id": "C00009",
+   "fingerprint": "f758dabb36e2",
+   "group_id": "G001",
+   "group_conflict": true,
+   "likely_noise": null,
+   "score": 84,
+   "reasons": [
+    "hardcoded mapping",
+    "reference-data style name",
+    "values look like codes",
+    "repeated in 4 places",
+    "copies disagree"
+   ]
+  },
+  {
+   "source_path": "/Shared/finance/region_rollup.sql",
+   "source_kind": "notebook",
+   "language": "sql",
+   "line": 12,
+   "pattern": "sql_case",
+   "shape": "mapping",
+   "item_count": 7,
+   "name": "sales_region",
+   "values": [
+    "NSW",
+    "VIC",
+    "QLD",
+    "NT",
+    "WA",
+    "SA",
+    "TAS"
+   ],
+   "pairs": [
+    [
+     "NSW",
+     "East"
+    ],
+    [
+     "VIC",
+     "East"
+    ],
+    [
+     "QLD",
+     "North"
+    ],
+    [
+     "NT",
+     "North"
+    ],
+    [
+     "WA",
+     "West"
+    ],
+    [
+     "SA",
+     "South"
+    ],
+    [
+     "TAS",
+     "South"
+    ]
+   ],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Shared/finance",
+   "in_job": false,
+   "snippet": "CASE state WHEN 'NSW' THEN 'East' WHEN 'VIC' THEN 'East' WHEN 'QLD' THEN 'North' WHEN 'NT' THEN 'North' WHEN 'WA' THEN 'West' WHEN 'SA' THEN 'South' WHEN 'TAS' THEN 'South' ELSE 'Other' END",
+   "id": "C00007",
+   "fingerprint": "449e11ec7d98",
+   "group_id": "G001",
+   "group_conflict": false,
+   "likely_noise": null,
+   "score": 73,
+   "reasons": [
+    "hardcoded mapping",
+    "reference-data style name",
+    "values look like codes",
+    "repeated in 4 places"
+   ]
+  },
+  {
+   "source_path": "/Shared/finance/finance_report.py",
+   "source_kind": "notebook",
+   "language": "python",
+   "line": 30,
+   "pattern": "python_dataframe_literal",
+   "shape": "mapping",
+   "item_count": 6,
+   "name": "account_groups",
+   "values": [
+    "4000",
+    "4100",
+    "5000",
+    "6000",
+    "6100",
+    "7000"
+   ],
+   "pairs": [
+    [
+     "4000",
+     "Revenue"
+    ],
+    [
+     "4100",
+     "Revenue"
+    ],
+    [
+     "5000",
+     "Cost of Sales"
+    ],
+    [
+     "6000",
+     "Operating Expenses"
+    ],
+    [
+     "6100",
+     "Operating Expenses"
+    ],
+    [
+     "7000",
+     "Other Income"
+    ]
+   ],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Shared/finance",
+   "in_job": false,
+   "snippet": "[ (\"4000\", \"Revenue\"), (\"4100\", \"Revenue\"), (\"5000\", \"Cost of Sales\"), (\"6000\", \"Operating Expenses\"), (\"6100\", \"Operating Expenses\"), (\"7000\", \"Other Income\"), ]",
+   "id": "C00006",
+   "fingerprint": "a51011fc90c5",
+   "group_id": null,
+   "group_conflict": false,
+   "likely_noise": null,
+   "score": 58,
+   "reasons": [
+    "hardcoded mapping",
+    "reference-data style name",
+    "values look like codes"
+   ]
+  },
+  {
+   "source_path": "/Repos/analytics/dbt_project/models/stg_customers.sql",
+   "source_kind": "dbt_model",
+   "language": "sql",
+   "line": 11,
+   "pattern": "sql_case",
+   "shape": "mapping",
+   "item_count": 5,
+   "name": "segment",
+   "values": [
+    "E",
+    "M",
+    "S",
+    "C",
+    "G"
+   ],
+   "pairs": [
+    [
+     "E",
+     "Enterprise"
+    ],
+    [
+     "M",
+     "Mid-market"
+    ],
+    [
+     "S",
+     "Small business"
+    ],
+    [
+     "C",
+     "Consumer"
+    ],
+    [
+     "G",
+     "Government"
+    ]
+   ],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Repos/analytics/dbt_project/models",
+   "in_job": false,
+   "snippet": "CASE segment_code WHEN 'E' THEN 'Enterprise' WHEN 'M' THEN 'Mid-market' WHEN 'S' THEN 'Small business' WHEN 'C' THEN 'Consumer' WHEN 'G' THEN 'Government' ELSE 'Unknown' END",
+   "id": "C00001",
+   "fingerprint": "abe412f18589",
+   "group_id": null,
+   "group_conflict": false,
+   "likely_noise": null,
+   "score": 57,
+   "reasons": [
+    "hardcoded mapping",
+    "reference-data style name",
+    "values look like codes"
+   ]
+  },
+  {
+   "source_path": "/Shared/finance/region_rollup.sql",
+   "source_kind": "notebook",
+   "language": "sql",
+   "line": 23,
+   "pattern": "embedded_sql_insert_values",
+   "shape": "mapping",
+   "item_count": 5,
+   "name": "main.reference.currency",
+   "values": [
+    "AUD",
+    "NZD",
+    "USD",
+    "EUR",
+    "GBP"
+   ],
+   "pairs": [
+    [
+     "AUD",
+     "Australian Dollar"
+    ],
+    [
+     "NZD",
+     "New Zealand Dollar"
+    ],
+    [
+     "USD",
+     "US Dollar"
+    ],
+    [
+     "EUR",
+     "Euro"
+    ],
+    [
+     "GBP",
+     "Pound Sterling"
+    ]
+   ],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Shared/finance",
+   "in_job": false,
+   "snippet": "VALUES ('AUD', 'Australian Dollar'), ('NZD', 'New Zealand Dollar'), ('USD', 'US Dollar'), ('EUR', 'Euro'), ('GBP', 'Pound Sterling')",
+   "id": "C00008",
+   "fingerprint": "78241f41492b",
+   "group_id": null,
+   "group_conflict": false,
+   "likely_noise": null,
+   "score": 57,
+   "reasons": [
+    "hardcoded mapping",
+    "reference-data style name",
+    "values look like codes"
+   ]
+  },
+  {
+   "source_path": "/Users/jane.doe@contoso.com/sales_transform.py",
+   "source_kind": "notebook",
+   "language": "python",
+   "line": 31,
+   "pattern": "python_when_chain",
+   "shape": "mapping",
+   "item_count": 5,
+   "name": "channel",
+   "values": [
+    "01",
+    "02",
+    "03",
+    "04",
+    "05"
+   ],
+   "pairs": [
+    [
+     "01",
+     "Retail"
+    ],
+    [
+     "02",
+     "Wholesale"
+    ],
+    [
+     "03",
+     "Online"
+    ],
+    [
+     "04",
+     "Marketplace"
+    ],
+    [
+     "05",
+     "Phone"
+    ]
+   ],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Users/jane.doe@contoso.com",
+   "in_job": false,
+   "snippet": "F.when(F.col(\"channel_code\") == \"01\", \"Retail\") .when(F.col(\"channel_code\") == \"02\", \"Wholesale\") .when(F.col(\"channel_code\") == \"03\", \"Online\") .when(F.col(\"channel_code\") == \"04\", \"Marketplace\") .when(F.col(\"channel_code\") == \"05\", \"Phone...",
+   "id": "C00011",
+   "fingerprint": "903abb20caab",
+   "group_id": null,
+   "group_conflict": false,
+   "likely_noise": null,
+   "score": 57,
+   "reasons": [
+    "hardcoded mapping",
+    "reference-data style name",
+    "values look like codes"
+   ]
+  },
+  {
+   "source_path": "/Shared/finance/finance_report.py",
+   "source_kind": "notebook",
+   "language": "python",
+   "line": 16,
+   "pattern": "python_list",
+   "shape": "code_list",
+   "item_count": 12,
+   "name": "COST_CENTRES",
+   "values": [
+    "CC100",
+    "CC110",
+    "CC120",
+    "CC130",
+    "CC200",
+    "CC210",
+    "CC220",
+    "CC300",
+    "CC310",
+    "CC320",
+    "CC400",
+    "CC410"
+   ],
+   "pairs": [],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Shared/finance",
+   "in_job": false,
+   "snippet": "[\"CC100\", \"CC110\", \"CC120\", \"CC130\", \"CC200\", \"CC210\", \"CC220\", \"CC300\", \"CC310\", \"CC320\", \"CC400\", \"CC410\"]",
+   "id": "C00004",
+   "fingerprint": "ec871cc493c6",
+   "group_id": null,
+   "group_conflict": false,
+   "likely_noise": null,
+   "score": 46,
+   "reasons": [
+    "hardcoded list",
+    "reference-data style name",
+    "values look like codes"
+   ]
+  },
+  {
+   "source_path": "/Users/jane.doe@contoso.com/sales_transform.py",
+   "source_kind": "notebook",
+   "language": "sql",
+   "line": 49,
+   "pattern": "sql_in_list",
+   "shape": "code_list",
+   "item_count": 12,
+   "name": "product_code",
+   "values": [
+    "P100",
+    "P101",
+    "P102",
+    "P103",
+    "P104",
+    "P105",
+    "P106",
+    "P107",
+    "P108",
+    "P109",
+    "P110",
+    "P111"
+   ],
+   "pairs": [],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Users/jane.doe@contoso.com",
+   "in_job": false,
+   "snippet": "product_code IN ('P100', 'P101', 'P102', 'P103', 'P104', 'P105', 'P106', 'P107', 'P108', 'P109', 'P110', 'P111')",
+   "id": "C00012",
+   "fingerprint": "68cf97d0246a",
+   "group_id": null,
+   "group_conflict": false,
+   "likely_noise": null,
+   "score": 46,
+   "reasons": [
+    "hardcoded list",
+    "reference-data style name",
+    "values look like codes"
+   ]
+  },
+  {
+   "source_path": "/Shared/finance/finance_report.py",
+   "source_kind": "notebook",
+   "language": "python",
+   "line": 18,
+   "pattern": "python_dict",
+   "shape": "mapping",
+   "item_count": 5,
+   "name": "spark_conf",
+   "values": [
+    "spark.sql.shuffle.partitions",
+    "spark.sql.adaptive.enabled",
+    "spark.databricks.delta.optimizeWrite.enabled",
+    "spark.sql.ansi.enabled",
+    "spark.sql.session.timeZone"
+   ],
+   "pairs": [
+    [
+     "spark.sql.shuffle.partitions",
+     "64"
+    ],
+    [
+     "spark.sql.adaptive.enabled",
+     "true"
+    ],
+    [
+     "spark.databricks.delta.optimizeWrite.enabled",
+     "true"
+    ],
+    [
+     "spark.sql.ansi.enabled",
+     "false"
+    ],
+    [
+     "spark.sql.session.timeZone",
+     "Australia/Brisbane"
+    ]
+   ],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Shared/finance",
+   "in_job": false,
+   "snippet": "{\"spark.sql.shuffle.partitions\": \"64\", \"spark.sql.adaptive.enabled\": \"true\", \"spark.databricks.delta.optimizeWrite.enabled\": \"true\", \"spark.sql.ansi.enabled\": \"false\", \"spark.sql.session.timeZone\": \"Australia/Brisbane\"}",
+   "id": "C00005",
+   "fingerprint": "cd896fa3cb70",
+   "group_id": null,
+   "group_conflict": false,
+   "likely_noise": "looks like configuration settings",
+   "score": 10,
+   "reasons": [
+    "looks like configuration settings"
+   ]
+  },
+  {
+   "source_path": "/Users/jane.doe@contoso.com/sales_transform.py",
+   "source_kind": "notebook",
+   "language": "python",
+   "line": 21,
+   "pattern": "python_list",
+   "shape": "code_list",
+   "item_count": 12,
+   "name": "select_cols",
+   "values": [
+    "order_id",
+    "order_date",
+    "customer_id",
+    "state",
+    "channel_code",
+    "product_code",
+    "qty",
+    "unit_price",
+    "discount",
+    "tax",
+    "total",
+    "currency"
+   ],
+   "pairs": [],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Users/jane.doe@contoso.com",
+   "in_job": false,
+   "snippet": "[\"order_id\", \"order_date\", \"customer_id\", \"state\", \"channel_code\", \"product_code\", \"qty\", \"unit_price\", \"discount\", \"tax\", \"total\", \"currency\"]",
+   "id": "C00010",
+   "fingerprint": "d44962df2434",
+   "group_id": null,
+   "group_conflict": false,
+   "likely_noise": "looks like a list of column names",
+   "score": 10,
+   "reasons": [
+    "looks like a list of column names"
+   ]
+  }
+ ],
+ "duplicate_groups": [
+  {
+   "group_id": "G001",
+   "finding_ids": [
+    "C00002",
+    "C00003",
+    "C00007",
+    "C00009"
+   ],
+   "locations": [
+    "/Repos/analytics/dbt_project/models/stg_customers.sql:14",
+    "/Shared/finance/finance_report.py:5",
+    "/Shared/finance/region_rollup.sql:12",
+    "/Users/jane.doe@contoso.com/sales_transform.py:10"
+   ],
+   "item_count": 8,
+   "exact": false,
+   "conflicting": true,
+   "label": "STATE_MAP",
+   "sample": "NSW -> New South Wales, QLD -> Queensland, VIC -> Victoria, SA -> South Australia, WA -> Western Australia, ... (+3)",
+   "differences": [
+    "ACT: ACT vs Australian Capital Territory",
+    "WA: West Australia vs Western Australia"
+   ]
+  }
+ ],
+ "stats": {
+  "tables_scanned": 0,
+  "code_assets_scanned": 4,
+  "code_assets_with_findings": 4,
+  "files_found": 4,
+  "files_by_extension": {
+   ".csv": 3,
+   ".xlsx": 1
+  },
+  "files_referenced_by_code": 1,
+  "files_loaded_into_tables": 0,
+  "dbt_seeds": 1,
+  "lookup_table_candidates": 0,
+  "code_findings": 10,
+  "code_findings_filtered_as_noise": 2,
+  "code_findings_by_pattern": {
+   "sql_case": 3,
+   "python_dict": 2,
+   "python_list": 1,
+   "python_dataframe_literal": 1,
+   "embedded_sql_insert_values": 1,
+   "python_when_chain": 1,
+   "sql_in_list": 1
+  },
+  "hardcoded_values_total": 76,
+  "duplicate_groups": 1,
+  "conflicting_groups": 1,
+  "duplicated_findings": 4,
+  "estimated_reference_sets": 11,
+  "high_priority": 8
+ },
+ "warnings": []
+}

@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "refdata-scanner"
+version = "0.1.0"
+description = "Find hidden reference data in your data platform: CSV/Excel files, small lookup tables and hardcoded lists, mappings and CASE statements in code."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "TitanRDM" }]
+requires-python = ">=3.9"
+dependencies = [
+  "sqlglot>=25.0",
+]
+keywords = ["reference data", "data governance", "databricks", "unity catalog", "rdm"]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Database",
+]
+
+[project.optional-dependencies]
+databricks = ["databricks-sdk>=0.30"]
+excel = ["openpyxl>=3.1"]
+all = ["databricks-sdk>=0.30", "openpyxl>=3.1"]
+dev = ["pytest>=7", "databricks-sdk>=0.30", "openpyxl>=3.1"]
+
+[project.scripts]
+refdata-scanner = "refdata_scanner.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/TitanRDM/refdata-scanner"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+refdata_scanner = ["templates/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

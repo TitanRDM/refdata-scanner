@@ -1,0 +1,37 @@
+{
+  "platform": "local",
+  "scanned_at": "2026-10-09T05:48:15+00:00",
+  "stats": {
+    "tables_scanned": 0,
+    "code_assets_scanned": 4,
+    "code_assets_with_findings": 4,
+    "files_found": 4,
+    "files_by_extension": {
+      ".csv": 3,
+      ".xlsx": 1
+    },
+    "files_referenced_by_code": 1,
+    "files_loaded_into_tables": 0,
+    "dbt_seeds": 1,
+    "lookup_table_candidates": 0,
+    "code_findings": 10,
+    "code_findings_filtered_as_noise": 2,
+    "code_findings_by_pattern": {
+      "sql_case": 3,
+      "python_dict": 2,
+      "python_list": 1,
+      "python_dataframe_literal": 1,
+      "embedded_sql_insert_values": 1,
+      "python_when_chain": 1,
+      "sql_in_list": 1
+    },
+    "hardcoded_values_total": 76,
+    "duplicate_groups": 1,
+    "conflicting_groups": 1,
+    "duplicated_findings": 4,
+    "estimated_reference_sets": 11,
+    "high_priority": 8
+  },
+  "scanner": "refdata-scanner",
+  "scanner_url": "https://github.com/TitanRDM/refdata-scanner"
+}

@@ -1,0 +1,168 @@
+# refdata-scanner
+
+**Find the reference data hiding in your data platform.**
+
+Country codes in a Python dictionary. A cost-centre list pasted into three notebooks. A `CASE` statement mapping
+product codes to categories. A spreadsheet someone uploads to a volume every month. That is reference data, and on most
+data platforms it is scattered, copied and quietly drifting apart.
+
+refdata-scanner is a free, open-source, **read-only** scanner that finds it and writes an assessment report:
+
+- **CSV and Excel files** in Unity Catalog volumes, workspace folders (including Git folders), DBFS `/FileStore`,
+  dbt seed folders, and files known only from lineage
+- **Lookup-table candidates**: small, narrow tables with reference-data style names, or tables loaded from spreadsheets
+- **Hardcoded reference data in code**: Python dicts, lists, sets and tuples; `spark.createDataFrame([...])` and
+  `pd.DataFrame(...)` literals; `.isin([...])` filters; `.replace({...})` mappings; `F.when().when()` chains;
+  SQL `CASE` mappings, long `IN (...)` lists and `VALUES` tables, including SQL inside `spark.sql("...")`, in
+  notebooks, code files, dbt models, saved SQL queries and view definitions
+- **Duplicates and drift**: the same list or mapping copied into several places, and copies that *disagree*
+  (for example `WA: West Australia vs Western Australia`)
+
+See a [sample report](examples/sample-report/report.md) produced from the [demo workspace](examples/demo-workspace).
+
+Supported today: **Databricks** and **local folders** (Git checkouts, dbt projects, exported notebooks).
+Snowflake and Microsoft Fabric are on the [roadmap](#roadmap).
+
+---
+
+## Three ways to run it
+
+### 1. Five-minute SQL check (Databricks, nothing to install)
+
+Import [`notebooks/databricks/01_quick_scan.sql`](notebooks/databricks/01_quick_scan.sql) into your workspace, set
+the catalog widget and *Run all*. It uses Unity Catalog system tables and the information schema to show:
+
+- tables that were loaded from CSV or Excel files (lineage)
+- SQL that read CSV or Excel files in the last 90 days (query history)
+- views with hardcoded `CASE` mappings or literal `IN` lists
+- lookup-table candidates
+
+It needs a SQL warehouse, serverless compute or Databricks Runtime 15.2+. The lineage and query history cells need
+read access to `system.access` and `system.query`, which a metastore admin may have to grant.
+
+### 2. Full scan in a Databricks notebook (recommended)
+
+1. In your workspace, create a **Git folder** from `https://github.com/TitanRDM/refdata-scanner`
+   (Workspace > Create > Git folder).
+2. Open [`notebooks/databricks/02_full_scan.py`](notebooks/databricks/02_full_scan.py), attach serverless or any
+   Unity Catalog cluster, and run the first cells to create the widgets.
+3. Set the **catalog**, optional **schemas**, and the **workspace folders** to scan, then *Run all*.
+
+The report is shown in the notebook, and the inventories are displayed as sortable tables. Set the output folder to a
+volume (for example `/Volumes/main/default/scans`) to keep and download the files.
+
+No credentials to configure: inside a notebook the scanner uses your own identity, so it only sees what you can see.
+
+### 3. Command line
+
+```bash
+pip install "refdata-scanner[all] @ git+https://github.com/TitanRDM/refdata-scanner"
+
+# Databricks: uses the standard Databricks CLI / SDK authentication (~/.databrickscfg, env vars, OAuth)
+refdata-scanner databricks --profile prod --catalog main --schemas finance,sales \
+    --workspace-path /Shared --workspace-path /Users \
+    --warehouse-id 1234567890abcdef
+
+# Local folders: a Git checkout of your notebooks, a dbt project, an exported workspace
+refdata-scanner local ./analytics-repo ./dbt_project --dialect snowflake
+```
+
+`--warehouse-id` is optional; it enables lineage, query history and table sizes through a SQL warehouse.
+Run `refdata-scanner databricks --help` for every option.
+
+---
+
+## What you get
+
+Each run writes a folder:
+
+| File | Contents |
+|---|---|
+| `report.html` / `report.md` | The assessment: headline numbers, key findings, duplicated and drifting sets, top candidates, hotspots by location and owner, and next steps |
+| `code_findings.csv` | Every hardcoded list, mapping and inline table: location, line, pattern, name, item count, sample values, score and reasons |
+| `files.csv` | Every CSV/Excel file: location, size, modified date, owner, which code reads it, which tables it was loaded into |
+| `tables.csv` | Lookup-table candidates with column count, size and reasons |
+| `duplicate_groups.csv` | Sets copied into several places, whether copies are identical, and where they disagree |
+| `findings.json` | Everything above in one machine-readable file (input for the AI assessment skill) |
+| `summary.json` | Counts only, with no names, paths or values. Safe to share. |
+
+Every candidate gets a **score from 0 to 100** (High 60+, Medium 35-59, Low below 35) with the reasons spelled out:
+mappings and inline tables score higher than plain lists; reference-data style names (`_map`, `lookup`, `codes`,
+`status`, `region` ...), duplication, disagreeing copies, use in scheduled jobs, spreadsheets and manual upload
+locations all add to the score.
+
+Things that look like reference data but usually are not are **set aside, not hidden**: lists of column names
+(checked against the catalog's real column names), Spark/configuration dictionaries, column renames and numeric
+sequences. They stay in `code_findings.csv` with a `noise_reason`.
+
+## Safe by design
+
+- **Read-only.** The scanner lists and reads; it never creates, changes or deletes anything on your platform.
+- **Metadata and code only.** File contents are not read unless you turn on `inspect files`, and even then only the
+  header row and a row estimate are kept.
+- **Nothing leaves your environment.** No telemetry, no network calls except to your own platform's APIs.
+- **Your permissions.** It runs as you, so results only include what your account can see.
+- **Shareable output.** `--redact` (or the *Redact* widget) removes literal values, comments and user names from every
+  output, and `summary.json` never contains them.
+- **Small and readable.** Plain Python with two dependencies (`sqlglot` for SQL parsing and the Databricks SDK).
+  Read it before you run it.
+
+## Thresholds
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--min-list-items` | 10 | Report lists with **more than** this many literal items |
+| `--min-mapping-items` | 5 | Report dicts and other code-to-value mappings from this many entries |
+| `--min-case-branches` | 5 | Report `CASE` expressions and `when()` chains from this many branches |
+| `--min-inline-rows` | 3 | Report inline tables (`VALUES`, `createDataFrame`) from this many rows |
+| `--inspect-files` | off | Read CSV/Excel header rows (up to 5 MB per file) |
+| `--redact` | off | Hide values and names in all outputs |
+
+## AI-assisted assessment (optional)
+
+The scanner is deterministic: it finds candidates but cannot tell what they mean. The
+[`skills/refdata-assessment`](skills/refdata-assessment/SKILL.md) skill takes `findings.json` and has an AI assistant
+(for example Claude) classify each finding by business domain, merge copies into named reference data sets, and write
+`assessment.md` with a migration plan. Load the skill in your assistant and point it at a scan folder. This step is
+optional, and only sends data to the assistant you choose.
+
+## How it works
+
+```
+adapters/        one per platform: find files, code and tables (Databricks, local; Snowflake and Fabric next)
+scanners/        python_scanner (Python ast), sql_scanner (sqlglot, with a regex fallback)
+notebook_parser  splits Databricks source-format and Jupyter (.ipynb) notebooks into Python and SQL cells
+analysis         noise filtering, duplicate and drift detection, file usage, scoring
+report           CSV/JSON inventories and the Markdown/HTML assessment
+```
+
+Python is parsed with the standard library `ast` module and SQL with [sqlglot](https://github.com/tobymao/sqlglot)
+(an SQL parser that understands the Databricks, Snowflake and T-SQL dialects), so literals are counted from the
+parsed code rather than guessed with regular expressions. Templated SQL (dbt Jinja, `${var}`) is neutralised before
+parsing, and anything that still cannot be parsed falls back to pattern matching rather than being skipped.
+
+## Roadmap
+
+- **Snowflake**: stages (`LIST @stage`), `ACCOUNT_USAGE.COPY_HISTORY` and `ACCESS_HISTORY`, Snowflake Notebooks,
+  stored procedures, UDFs (user-defined functions) and views.
+- **Microsoft Fabric**: Lakehouse `Files` in OneLake, notebooks through the Fabric REST API, Dataflow Gen2 and
+  Power BI semantic models (where "Enter data" tables and DAX `SWITCH` statements hold a lot of reference data).
+
+The scanners, analysis and reports are platform-neutral; a new platform only needs an adapter implementing
+[`PlatformAdapter`](src/refdata_scanner/adapters/base.py). Contributions are welcome.
+
+## Development
+
+```bash
+pip install -e ".[dev]"
+pytest
+refdata-scanner local examples/demo-workspace --inspect-files --out /tmp/demo
+```
+
+## About
+
+Built by [TitanRDM](https://titanrdm.com). Reference data that lives in spreadsheets and code has no owner, no approval
+workflow and no history. TitanRDM gives business users a governed place to maintain it, published straight into
+Databricks, Snowflake and Fabric.
+
+Licensed under the [MIT License](LICENSE).

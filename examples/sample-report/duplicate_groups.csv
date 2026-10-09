@@ -1,0 +1,2 @@
+group,label,copies,max_items,identical,copies_disagree,differences,locations,sample
+G001,STATE_MAP,4,8,no,yes,ACT: ACT vs Australian Capital Territory; WA: West Australia vs Western Australia,/Repos/analytics/dbt_project/models/stg_customers.sql:14; /Shared/finance/finance_report.py:5; /Shared/finance/region_rollup.sql:12; /Users/jane.doe@contoso.com/sales_transform.py:10,"NSW -> New South Wales, QLD -> Queensland, VIC -> Victoria, SA -> South Australia, WA -> Western Australia, ... (+3)"
