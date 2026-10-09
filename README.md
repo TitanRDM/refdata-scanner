@@ -29,15 +29,17 @@ Snowflake and Microsoft Fabric are on the [roadmap](#roadmap).
 
 ### 1. Five-minute SQL check (Databricks, nothing to install)
 
-Import [`notebooks/databricks/01_quick_scan.sql`](notebooks/databricks/01_quick_scan.sql) into your workspace, set
-the catalog widget and *Run all*. It uses Unity Catalog system tables and the information schema to show:
+Import [`notebooks/databricks/01_quick_scan.sql`](notebooks/databricks/01_quick_scan.sql) into your workspace (it is
+also in the zip), edit the catalog in the first SQL cell (it defaults to your current catalog) and *Run all*. It uses Unity Catalog system tables and the information schema to show:
 
 - tables that were loaded from CSV or Excel files (lineage)
 - SQL that read CSV or Excel files in the last 90 days (query history)
 - views with hardcoded `CASE` mappings or literal `IN` lists
 - lookup-table candidates
 
-It needs a SQL warehouse, serverless compute or Databricks Runtime 15.2+. The lineage and query history cells need
+It runs on a SQL warehouse (including serverless), serverless compute, or a cluster on Databricks Runtime 14.1+.
+Its settings are SQL session variables rather than widgets, because notebooks attached to a SQL warehouse can't
+create widgets from code. The lineage and query history cells need
 read access to `system.access` and `system.query`, which a metastore admin may have to grant.
 
 ### 2. Full scan in a Databricks notebook (recommended)
@@ -75,6 +77,18 @@ only thing the scanner ever installs; set the *Install sqlglot* widget to `no` t
 scanned with pattern matching, which is less precise.
 
 No credentials to configure: inside a notebook the scanner uses your own identity, so it only sees what you can see.
+
+### Trying it on a test workspace
+
+A quiet workspace gives a quiet report. [`tools/databricks/create_demo_artifacts.py`](tools/databricks/create_demo_artifacts.py)
+fills a workspace with realistic reference data for the scanner to find: a schema with a volume of CSV and Excel
+files, lookup tables (some loaded from those files, so lineage picks them up), views with `CASE` mappings, notebooks
+with hardcoded dicts, lists and `when()` chains (including copies that disagree), a saved query and a job.
+Import it into your workspace, run it with *action* = `create`, then point `02_full_scan` at the schema and folder it
+prints. Run it again with *action* = `cleanup` to delete everything it created.
+
+Unlike the scanner, this notebook **writes** to the workspace, so it is not part of the zip bundle. Use it only
+where test objects are welcome.
 
 ### 3. Command line
 

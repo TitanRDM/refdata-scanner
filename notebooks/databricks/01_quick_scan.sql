@@ -13,9 +13,11 @@
 -- MAGIC | 4 | Small tables that look like lookup / mapping tables |
 -- MAGIC | 5 | A one-row summary |
 -- MAGIC
--- MAGIC **How to run:** set the widgets at the top (catalog, optional comma-separated schemas, days of history), then *Run all*.
+-- MAGIC **How to run:** edit the three settings in the first SQL cell (catalog, optional schemas, days of history),
+-- MAGIC then *Run all*. The settings are SQL session variables, so the notebook works the same on a SQL warehouse,
+-- MAGIC serverless compute or a cluster, with no widgets to create.
 -- MAGIC
--- MAGIC **Requirements:** a SQL warehouse, serverless compute or a cluster on Databricks Runtime 15.2+ (for `:parameter` widgets).
+-- MAGIC **Requirements:** a SQL warehouse (serverless or pro), serverless compute, or a cluster on Databricks Runtime 14.1+.
 -- MAGIC Cells 1 and 2 need read access to `system.access` and `system.query`; ask a metastore admin if they error.
 -- MAGIC The other cells only need access to the catalog you are scanning.
 -- MAGIC
@@ -26,9 +28,15 @@
 
 -- COMMAND ----------
 
-CREATE WIDGET TEXT catalog DEFAULT 'main';
-CREATE WIDGET TEXT schemas DEFAULT '';
-CREATE WIDGET TEXT lookback_days DEFAULT '90';
+-- Settings: edit these, then Run all.
+-- Catalog to scan (default: the current catalog).
+DECLARE OR REPLACE VARIABLE rds_catalog STRING DEFAULT current_catalog();
+-- Schemas to scan, e.g. array('finance', 'sales'). Empty = every schema in the catalog.
+DECLARE OR REPLACE VARIABLE rds_schemas ARRAY<STRING> DEFAULT array();
+-- Days of query history to search.
+DECLARE OR REPLACE VARIABLE rds_lookback_days INT DEFAULT 90;
+
+SELECT rds_catalog AS catalog, rds_schemas AS schemas, rds_lookback_days AS lookback_days;
 
 -- COMMAND ----------
 
@@ -47,8 +55,8 @@ SELECT
 FROM system.access.table_lineage
 WHERE source_type = 'PATH'
   AND lower(source_path) RLIKE '\\.(csv|tsv|xlsx|xls|xlsm|xlsb)(\\.gz)?$'
-  AND target_table_catalog = :catalog
-  AND (trim(:schemas) = '' OR array_contains(transform(split(:schemas, ','), s -> trim(s)), target_table_schema))
+  AND target_table_catalog = rds_catalog
+  AND (size(rds_schemas) = 0 OR array_contains(rds_schemas, target_table_schema))
 GROUP BY source_path, target_table_full_name
 ORDER BY last_loaded DESC
 
@@ -67,7 +75,7 @@ SELECT
   count(*)                                                AS runs,
   max(start_time)                                         AS last_run
 FROM system.query.history
-WHERE start_time >= date_sub(current_date(), CAST(:lookback_days AS INT))
+WHERE start_time >= date_sub(current_date(), rds_lookback_days)
   AND lower(statement_text) RLIKE '\\.(csv|tsv|xlsx|xls|xlsm|xlsb)'
 GROUP BY 1, 2
 ORDER BY runs DESC
@@ -89,8 +97,8 @@ SELECT * FROM (
     size(split(upper(view_definition), '\\bIN\\s*\\(\\s*\'')) - 1           AS literal_in_lists,
     size(split(upper(view_definition), '\\bVALUES\\s*\\(')) - 1              AS inline_values
   FROM system.information_schema.views
-  WHERE table_catalog = :catalog
-    AND (trim(:schemas) = '' OR array_contains(transform(split(:schemas, ','), s -> trim(s)), table_schema))
+  WHERE table_catalog = rds_catalog
+    AND (size(rds_schemas) = 0 OR array_contains(rds_schemas, table_schema))
 )
 WHERE when_branches_total >= 5 OR literal_in_lists > 0 OR inline_values > 0
 ORDER BY when_branches_total DESC
@@ -107,7 +115,7 @@ ORDER BY when_branches_total DESC
 WITH col_counts AS (
   SELECT table_catalog, table_schema, table_name, count(*) AS column_count
   FROM system.information_schema.columns
-  WHERE table_catalog = :catalog
+  WHERE table_catalog = rds_catalog
   GROUP BY ALL
 )
 SELECT
@@ -121,10 +129,10 @@ SELECT
   t.comment
 FROM system.information_schema.tables t
 JOIN col_counts c USING (table_catalog, table_schema, table_name)
-WHERE t.table_catalog = :catalog
+WHERE t.table_catalog = rds_catalog
   AND t.table_schema <> 'information_schema'
   AND t.table_type NOT IN ('VIEW', 'MATERIALIZED_VIEW', 'METRIC_VIEW')
-  AND (trim(:schemas) = '' OR array_contains(transform(split(:schemas, ','), s -> trim(s)), t.table_schema))
+  AND (size(rds_schemas) = 0 OR array_contains(rds_schemas, t.table_schema))
   AND c.column_count <= 12
   AND lower(t.table_name) RLIKE '(^|_)(lkp|lu|lookup|ref|reference|refdata|map|mapping|mappings|xref|crosswalk|code|codes|dim|type|types|status|statuses|category|categories|region|regions|country|countries|currency|currencies|seed|hierarchy|segment|segments|channel|channels|uom|calendar|holidays?)(_|$)'
 ORDER BY c.column_count, table_name
@@ -141,28 +149,28 @@ SELECT
      FROM system.access.table_lineage
     WHERE source_type = 'PATH'
       AND lower(source_path) RLIKE '\\.(csv|tsv|xlsx|xls|xlsm|xlsb)(\\.gz)?$'
-      AND target_table_catalog = :catalog
-      AND (trim(:schemas) = '' OR array_contains(transform(split(:schemas, ','), s -> trim(s)), target_table_schema))
+      AND target_table_catalog = rds_catalog
+      AND (size(rds_schemas) = 0 OR array_contains(rds_schemas, target_table_schema))
   ) AS csv_excel_files_loaded_into_tables,
   (SELECT count(DISTINCT target_table_full_name)
      FROM system.access.table_lineage
     WHERE source_type = 'PATH'
       AND lower(source_path) RLIKE '\\.(csv|tsv|xlsx|xls|xlsm|xlsb)(\\.gz)?$'
-      AND target_table_catalog = :catalog
-      AND (trim(:schemas) = '' OR array_contains(transform(split(:schemas, ','), s -> trim(s)), target_table_schema))
+      AND target_table_catalog = rds_catalog
+      AND (size(rds_schemas) = 0 OR array_contains(rds_schemas, target_table_schema))
   ) AS tables_fed_by_spreadsheets,
   (SELECT count(*)
      FROM system.information_schema.views
-    WHERE table_catalog = :catalog
-      AND (trim(:schemas) = '' OR array_contains(transform(split(:schemas, ','), s -> trim(s)), table_schema))
+    WHERE table_catalog = rds_catalog
+      AND (size(rds_schemas) = 0 OR array_contains(rds_schemas, table_schema))
       AND size(split(upper(view_definition), '\\bWHEN\\b')) - 1 >= 5
   ) AS views_with_case_mappings,
   (SELECT count(*)
      FROM system.information_schema.tables t
-    WHERE t.table_catalog = :catalog
+    WHERE t.table_catalog = rds_catalog
       AND t.table_schema <> 'information_schema'
       AND t.table_type NOT IN ('VIEW', 'MATERIALIZED_VIEW', 'METRIC_VIEW')
-      AND (trim(:schemas) = '' OR array_contains(transform(split(:schemas, ','), s -> trim(s)), t.table_schema))
+      AND (size(rds_schemas) = 0 OR array_contains(rds_schemas, t.table_schema))
       AND lower(t.table_name) RLIKE '(^|_)(lkp|lu|lookup|ref|reference|refdata|map|mapping|mappings|xref|crosswalk|code|codes|dim|type|types|status|statuses|category|categories|region|regions|country|countries|currency|currencies|seed|hierarchy|segment|segments|channel|channels|uom|calendar|holidays?)(_|$)'
   ) AS lookup_table_candidates
 
