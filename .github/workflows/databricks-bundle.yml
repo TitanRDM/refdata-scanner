@@ -3,6 +3,8 @@ name: databricks-bundle
 # Builds the importable Databricks bundle (refdata-scanner-databricks.zip).
 # Every push to main: available as a workflow artifact.
 # Every version tag (v0.1.0, ...): also attached to the GitHub release.
+# Manual run (Actions > databricks-bundle > Run workflow) with a version: creates that
+# tag and release on the selected branch and attaches the bundle.
 
 on:
   push:
@@ -10,6 +12,11 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Create a release with this tag, e.g. v0.1.0 (leave blank to just build)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -33,4 +40,16 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          files: dist/refdata-scanner-databricks.zip
+      - name: Create release from manual run
+        if: github.event_name == 'workflow_dispatch' && inputs.release_version != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release_version }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ inputs.release_version }}
+          generate_release_notes: true
+          body: |
+            **Install:** download `refdata-scanner-databricks.zip` below and import it into a Databricks
+            workspace folder (Import > File). See the README for details.
           files: dist/refdata-scanner-databricks.zip
