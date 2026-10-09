@@ -100,7 +100,15 @@ class FakeClient:
                 DirectoryEntry(path="/Volumes/main/ref/uploads/categories.csv", name="categories.csv", is_directory=False,
                                file_size=500, last_modified=1_700_000_000_000),
                 DirectoryEntry(path="/Volumes/main/ref/uploads/sub/", name="sub", is_directory=True),
+                DirectoryEntry(path="/Volumes/main/ref/uploads/refdata-scan-20260101-0900/", name="refdata-scan-20260101-0900",
+                               is_directory=True),
+                DirectoryEntry(path="/Volumes/main/ref/uploads/scans/", name="scans", is_directory=True),
             ],
+            "/Volumes/main/ref/uploads/refdata-scan-20260101-0900": [
+                DirectoryEntry(path="/Volumes/main/ref/uploads/refdata-scan-20260101-0900/files.csv", name="files.csv",
+                               is_directory=False)],
+            "/Volumes/main/ref/uploads/scans": [
+                DirectoryEntry(path="/Volumes/main/ref/uploads/scans/old.csv", name="old.csv", is_directory=False)],
             "/Volumes/main/ref/uploads/sub": [
                 DirectoryEntry(path="/Volumes/main/ref/uploads/sub/raw.parquet", name="raw.parquet", is_directory=False)],
         }
@@ -126,7 +134,8 @@ def fake_sql(query):
 
 
 def test_databricks_scan_end_to_end(tmp_path):
-    adapter = DatabricksAdapter(client=FakeClient(), catalog="main", exclude_paths=["/Workspace/Repos/me/refdata-scanner"],
+    adapter = DatabricksAdapter(client=FakeClient(), catalog="main",
+                                exclude_paths=["/Workspace/Repos/me/refdata-scanner", "/Volumes/main/ref/uploads/scans"],
                                 sql_runner=fake_sql)
     result = run_scan(adapter, ScanConfig(inspect_file_contents=True))
 
@@ -135,6 +144,7 @@ def test_databricks_scan_end_to_end(tmp_path):
     assert "/Users/jane@x.com/upload.xlsx" in paths
     assert "dbfs:/FileStore/tables/cost_centres.csv" in paths
     assert "s3://bucket/landing/gl_accounts.xlsx" in paths  # known only from lineage
+    assert not any("refdata-scan-" in p or "/scans/" in p for p in paths)  # earlier results never scanned
 
     vol = next(f for f in result.files if f.area == "volume")
     assert vol.referenced_by == ["/Users/jane@x.com/sales:3"] and vol.owner == "data-team"

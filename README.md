@@ -51,8 +51,19 @@ read access to `system.access` and `system.query`, which a metastore admin may h
    recommended), and run the first cell to create the widgets.
 4. Set the **catalog**, optional **schemas**, and the **workspace folders** to scan, then *Run all*.
 
-The report is shown in the notebook, and the inventories are displayed as sortable tables. Set the output folder to a
-volume (for example `/Volumes/main/default/scans`) to keep and download the files.
+The report is shown in the notebook, and the inventories are displayed as sortable tables.
+
+**Where the files go.** Each run writes a timestamped `refdata-scan-YYYYMMDD-HHMM` folder containing the report and
+inventories. By default it goes in a `Results` folder next to the notebook, so if you imported the zip into your home
+folder, the results stay in your home folder too. Open the folder in the workspace browser to download `report.html`
+or any CSV. To put results somewhere else, set the *Output folder* widget to another workspace folder
+(for example `/Users/you@company.com/scans`) or a volume. The scanner never scans its own results.
+
+**Running on a schedule.** To track reference data over time, run `02_full_scan` as a Databricks job (for example
+monthly) with the `output_path` parameter set to a volume such as `/Volumes/main/governance/refdata_scans`. A volume
+keeps the history of scans in one governed place that others can be granted access to, and each run's
+`summary.json` gives you counts to compare between runs. Set the job's other parameters (catalog, schemas, workspace
+folders) the same way; they match the widget names.
 
 With the zip, the notebook installs nothing and downloads nothing: everything it runs is in the folder you
 imported, which you can read before running it.

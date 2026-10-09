@@ -44,6 +44,9 @@ def _enum(v: Any) -> Optional[str]:
     return getattr(v, "value", v) if v is not None else None
 
 
+OUTPUT_FOLDER_PREFIX = "refdata-scan-"  # folders the scanner writes its results into
+
+
 def _ws_path(path: str) -> str:
     """Workspace API paths have no /Workspace prefix: /Workspace/Users/x -> /Users/x."""
     path = path.strip()
@@ -176,6 +179,10 @@ class DatabricksAdapter(PlatformAdapter):
 
     # -------------------------------------------------------------- workspace
     def _excluded(self, path: str) -> bool:
+        """Excluded folders, plus this scanner's own output folders (refdata-scan-*) from earlier runs."""
+        path = path.rstrip("/")
+        if path.rsplit("/", 1)[-1].startswith(OUTPUT_FOLDER_PREFIX):
+            return True
         return any(path == p or path.startswith(p + "/") for p in self.exclude_paths)
 
     def _workspace_objects(self) -> List[Any]:
@@ -273,6 +280,8 @@ class DatabricksAdapter(PlatformAdapter):
                 stack = [root]
                 while stack:
                     d = stack.pop()
+                    if self._excluded(d):
+                        continue
                     try:
                         entries = list(self.w.files.list_directory_contents(d))
                     except Exception as exc:
@@ -298,6 +307,8 @@ class DatabricksAdapter(PlatformAdapter):
             stack = [root]
             while stack:
                 d = stack.pop()
+                if self._excluded(d):
+                    continue
                 try:
                     entries = list(self.w.dbfs.list(d))
                 except Exception as exc:

@@ -32,7 +32,7 @@ dbutils.widgets.text("catalog", "main", "1. Catalog")
 dbutils.widgets.text("schemas", "", "2. Schemas (comma-separated, blank = all)")
 dbutils.widgets.text("workspace_paths", "/", "3. Workspace folders (comma-separated)")
 dbutils.widgets.text("exclude_paths", "", "4. Folders to skip (comma-separated)")
-dbutils.widgets.text("output_path", "", "5. Output folder (e.g. /Volumes/main/default/scans; blank = temp)")
+dbutils.widgets.text("output_path", "", "5. Output folder (blank = Results next to this notebook)")
 dbutils.widgets.dropdown("include_dbfs", "yes", ["yes", "no"], "6. Scan DBFS /FileStore")
 dbutils.widgets.dropdown("use_system_tables", "yes", ["yes", "no"], "7. Use lineage and query history")
 dbutils.widgets.dropdown("inspect_files", "no", ["no", "yes"], "8. Read CSV/Excel header rows")
@@ -47,15 +47,24 @@ import datetime
 import os
 import sys
 
+# Where this notebook lives. On serverless the working directory is not guaranteed,
+# so use the notebook's own workspace path rather than os.getcwd().
+try:
+    _nb_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
+    NOTEBOOK_DIR = "/Workspace" + os.path.dirname(_nb_path) if not _nb_path.startswith("/Workspace") \
+        else os.path.dirname(_nb_path)
+except Exception:
+    NOTEBOOK_DIR = os.getcwd()
+
 # Load the scanner from the files next to this notebook:
 #   imported bundle (ZIP)          -> ./lib   (includes the sqlglot SQL parser)
 #   Git folder clone of the repo   -> ../../src  (sqlglot not included)
-_SCANNER_ROOT_LEVELS = None  # how many folders up the scanner's own folder is (excluded from the scan)
-for _rel, _levels in (("lib", 0), (os.path.join("..", "..", "src"), 2)):
-    _candidate = os.path.abspath(os.path.join(os.getcwd(), _rel))
+SCANNER_FOLDER = None  # the scanner's own folder, excluded from the scan
+for _rel, _root in (("lib", "."), (os.path.join("..", "..", "src"), os.path.join("..", ".."))):
+    _candidate = os.path.normpath(os.path.join(NOTEBOOK_DIR, _rel))
     if os.path.isdir(os.path.join(_candidate, "refdata_scanner")):
         sys.path.insert(0, _candidate)
-        _SCANNER_ROOT_LEVELS = _levels
+        SCANNER_FOLDER = os.path.normpath(os.path.join(NOTEBOOK_DIR, _root))
         break
 else:
     raise RuntimeError(
@@ -88,9 +97,17 @@ def _list(name):
 
 
 catalog = dbutils.widgets.get("catalog").strip() or None
-output_path = dbutils.widgets.get("output_path").strip()
+
+# Output folder. Default: a Results folder next to this notebook (in your home folder if that's where you
+# imported it). For scheduled runs, point this at a volume, e.g. /Volumes/main/governance/refdata_scans.
+# Each run writes its own timestamped sub-folder.
+output_path = dbutils.widgets.get("output_path").strip().rstrip("/")
+if not output_path:
+    output_path = os.path.join(NOTEBOOK_DIR, "Results")
+elif output_path.startswith(("/Users/", "/Shared/", "/Repos/")):
+    output_path = "/Workspace" + output_path  # workspace paths are mounted under /Workspace
 stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
-out_dir = os.path.join(output_path, f"refdata-scan-{stamp}") if output_path else f"/tmp/refdata-scan-{stamp}"
+out_dir = os.path.join(output_path, f"refdata-scan-{stamp}")
 
 config = ScanConfig(
     min_list_items=int(dbutils.widgets.get("min_list_items")),
@@ -100,16 +117,8 @@ config = ScanConfig(
     sample_values=0 if dbutils.widgets.get("redact") == "yes" else 5,
 )
 
-# Don't scan the scanner: skip the folder its source code was imported into.
-exclude = _list("exclude_paths")
-if _SCANNER_ROOT_LEVELS is not None:
-    try:
-        _nb_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
-        _root = _nb_path.rsplit("/", 1 + _SCANNER_ROOT_LEVELS)[0]
-        if _root:
-            exclude.append(_root)
-    except Exception:
-        pass
+# Don't scan the scanner or its earlier results.
+exclude = _list("exclude_paths") + [SCANNER_FOLDER, output_path]
 
 paths = scan_databricks(
     catalog=catalog,
@@ -122,7 +131,7 @@ paths = scan_databricks(
     config=config,
     out_dir=out_dir,
 )
-print(f"\nOutputs written to {out_dir}")
+print(f"\nReport and inventories written to {out_dir}")
 
 # COMMAND ----------
 
@@ -165,20 +174,24 @@ display(dupes)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Getting the files
+# MAGIC ## Where the files are
 # MAGIC
-# MAGIC * If you set an **output folder** in a volume, download `report.html` and the CSV files from Catalog Explorer.
-# MAGIC * Otherwise the files are in a temporary folder on the cluster; run the next cell to copy them to a volume.
-# MAGIC * `findings.json` is the full machine-readable result. `summary.json` contains counts only (no names, paths or
-# MAGIC   values) and is safe to share.
-# MAGIC * Optional: give `findings.json` to an AI assistant with the `refdata-assessment` skill in this repository for a
-# MAGIC   written assessment and classification of each finding.
-
-# COMMAND ----------
-
-# Uncomment and set a volume path to keep a copy of the outputs.
-# target = "/Volumes/main/default/scans"
-# dbutils.fs.cp(f"file:{out_dir}", f"{target}/{os.path.basename(out_dir)}", recurse=True)
+# MAGIC Each run writes a timestamped `refdata-scan-YYYYMMDD-HHMM` folder (the path is printed above):
+# MAGIC
+# MAGIC * **Default:** a `Results` folder next to this notebook. Open it in the workspace browser and download
+# MAGIC   `report.html` or any CSV from the file's menu.
+# MAGIC * **Volume:** if you set the output folder to a volume, find the files in Catalog Explorer. Use a volume for
+# MAGIC   scheduled runs (a Databricks job running this notebook) so the history of scans is kept in one governed place,
+# MAGIC   and compare `summary.json` across runs to track progress.
+# MAGIC
+# MAGIC Outputs:
+# MAGIC * `report.html` / `report.md`: the assessment shown above.
+# MAGIC * `code_findings.csv`, `files.csv`, `tables.csv`, `duplicate_groups.csv`: the full inventories.
+# MAGIC * `findings.json`: everything in one machine-readable file. Optional: give it to an AI assistant with the
+# MAGIC   `refdata-assessment` skill from the repository for a written assessment and classification of each finding.
+# MAGIC * `summary.json`: counts only (no names, paths or values), safe to share.
+# MAGIC
+# MAGIC Earlier results are never scanned: the output folder and any `refdata-scan-*` folder are skipped.
 
 # COMMAND ----------
 

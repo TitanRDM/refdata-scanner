@@ -49,7 +49,7 @@ class LocalAdapter(PlatformAdapter):
                 yield root_path
                 continue
             for root, dirs, files in os.walk(root_path):
-                dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and not d.startswith("."))
+                dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and not d.startswith((".", "refdata-scan-")))
                 for name in sorted(files):
                     yield os.path.join(root, name)
 
@@ -69,7 +69,7 @@ class LocalAdapter(PlatformAdapter):
             if os.path.isfile(root_path):
                 continue
             for root, dirs, files in os.walk(root_path):
-                dirs[:] = [d for d in dirs if d not in SKIP_DIRS and not d.startswith(".")]
+                dirs[:] = [d for d in dirs if d not in SKIP_DIRS and not d.startswith((".", "refdata-scan-"))]
                 if "dbt_project.yml" in files:
                     roots.append(root)
         return roots
