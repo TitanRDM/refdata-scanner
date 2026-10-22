@@ -53,6 +53,15 @@ def has_name_hint(*names: Optional[str]) -> bool:
 # Noise filtering
 # --------------------------------------------------------------------------- #
 
+_NON_REF_TABLE_WORDS = {"log", "logs", "audit", "audits", "watermark", "watermarks", "checkpoint", "checkpoints",
+                        "control", "ctl", "job", "jobs", "run", "runs", "test", "tests", "tmp", "temp", "debug",
+                        "dummy", "sample", "samples", "example", "examples", "scratch", "event", "events"}
+
+
+def _is_table_load(pattern: str) -> bool:
+    return pattern.endswith(("insert_values", "merge_values", "ctas_values"))
+
+
 def flag_noise(findings: Iterable[CodeFinding], known_columns: Set[str]) -> None:
     """Mark findings that are probably column lists or configuration, not reference data."""
     known = {c.lower() for c in known_columns}
@@ -71,6 +80,8 @@ def flag_noise(findings: Iterable[CodeFinding], known_columns: Set[str]) -> None
             f.likely_noise = "looks like configuration settings"
         elif f.shape == "code_list" and _is_numeric_sequence(vals):
             f.likely_noise = "a numeric sequence (better generated than stored)"
+        elif _is_table_load(f.pattern) and _NON_REF_TABLE_WORDS & set(name_tokens((f.name or "").split(".")[-1])):
+            f.likely_noise = "writes to a log, control or test table"
 
 
 def _is_numeric_sequence(vals: List[str]) -> bool:
@@ -250,6 +261,12 @@ def score_code_finding(f: CodeFinding, group_sizes: Dict[str, int]) -> None:
     if has_name_hint(f.name):
         score += 15
         reasons.append("reference-data style name")
+    if _is_table_load(f.pattern):
+        score += 10
+        reasons.append("table contents maintained as literal VALUES in code" if f.source_kind != "query_history"
+                       else "table contents typed in as literal VALUES (query history)")
+        if f.statements > 1:
+            reasons.append(f"{f.statements} separate statements")
     codes = [v for v in f.values if _CODE_RE.match(v)]
     if f.values and len(codes) / len(f.values) >= 0.7:
         score += 5

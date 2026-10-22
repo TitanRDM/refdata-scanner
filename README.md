@@ -15,6 +15,11 @@ refdata-scanner is a free, open-source, **read-only** scanner that finds it and 
   `pd.DataFrame(...)` literals; `.isin([...])` filters; `.replace({...})` mappings; `F.when().when()` chains;
   SQL `CASE` mappings, long `IN (...)` lists and `VALUES` tables, including SQL inside `spark.sql("...")`, in
   notebooks, code files, dbt models, saved SQL queries and view definitions
+- **Tables filled from literal rows**: `INSERT INTO t VALUES (...)`, `MERGE INTO t USING (VALUES ...)` and
+  `CREATE TABLE t AS VALUES ...`, where typed-in rows are the table's only source. Every such statement for the same
+  table in a notebook or file is combined, so a seeding script of one-row `INSERT`s shows up as one table with all
+  its rows. On Databricks the query history is searched too, which catches rows typed into the SQL editor and saved
+  nowhere else.
 - **Duplicates and drift**: the same list or mapping copied into several places, and copies that *disagree*
   (for example `WA: West Australia vs Western Australia`)
 
@@ -34,6 +39,8 @@ also in the zip), edit the catalog in the first SQL cell (it defaults to your cu
 
 - tables that were loaded from CSV or Excel files (lineage)
 - SQL that read CSV or Excel files in the last 90 days (query history)
+- tables filled with literal rows (`INSERT ... VALUES`, `MERGE ... USING (VALUES ...)`, `CREATE TABLE AS VALUES`)
+  in query history
 - views with hardcoded `CASE` mappings or literal `IN` lists
 - lookup-table candidates
 
@@ -155,6 +162,7 @@ sequences. They stay in `code_findings.csv` with a `noise_reason`.
 | `--min-mapping-items` | 5 | Report dicts and other code-to-value mappings from this many entries |
 | `--min-case-branches` | 5 | Report `CASE` expressions and `when()` chains from this many branches |
 | `--min-inline-rows` | 3 | Report inline tables (`VALUES`, `createDataFrame`) from this many rows |
+| `--min-insert-rows` | 2 | Report a table filled from literal `VALUES` (INSERT, MERGE, CREATE TABLE AS) from this many rows in total; tables with reference-data style names count from 1 row |
 | `--inspect-files` | off | Read CSV/Excel header rows (up to 5 MB per file) |
 | `--redact` | off | Hide values and names in all outputs |
 

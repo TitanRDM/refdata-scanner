@@ -29,6 +29,8 @@ SqlRunner = Callable[[str], List[Dict[str, Any]]]
 
 _SAFE_NAME = re.compile(r"^[A-Za-z0-9_\-]+$")
 _FILE_EXT_RE = r"\\.(csv|tsv|xlsx|xls|xlsm|xlsb)(\\.gz)?"
+# Statements that fill a table from literal VALUES (written for a SQL string literal: \\ becomes \ in the regex).
+_LOAD_VALUES_RE = r"(?is)^\\s*(insert|merge|create)\\b.*\\bvalues\\s*\\("
 
 
 def _ms_to_iso(ms: Optional[int]) -> Optional[str]:
@@ -399,23 +401,33 @@ class DatabricksAdapter(PlatformAdapter):
             yield from self._query_history()
 
     def _query_history(self) -> Iterator[CodeAsset]:
-        q = f"""
-            SELECT statement_text, executed_by, max(start_time) AS last_run, count(*) AS runs
-            FROM system.query.history
-            WHERE start_time >= current_timestamp() - INTERVAL {self.history_days} DAYS
-              AND lower(statement_text) RLIKE '{_FILE_EXT_RE}'
-            GROUP BY statement_text, executed_by
-            ORDER BY runs DESC
-            LIMIT 2000"""
-        try:
-            rows = self.sql(q)
-        except Exception as exc:
-            self.warn(f"Query history (system.query.history) not available: {_short_err(exc)}")
-            return
-        for n, row in enumerate(rows, 1):
-            yield CodeAsset(path=f"query history #{n} ({row.get('runs')} runs)", kind="query_history", language="sql",
-                            content=row.get("statement_text") or "", owner=row.get("executed_by"),
-                            modified_at=str(row.get("last_run") or "") or None, location="Query history")
+        """Two read-only queries on system.query.history: SQL that read CSV/Excel files, and statements that fill
+        a table from literal VALUES (INSERT / MERGE / CREATE TABLE AS)."""
+        searches = (
+            ("files", f"lower(statement_text) RLIKE '{_FILE_EXT_RE}'"),
+            ("values", f"statement_text RLIKE '{_LOAD_VALUES_RE}'"),
+        )
+        n = 0
+        for label, condition in searches:
+            q = f"""
+                SELECT statement_text, executed_by, max(start_time) AS last_run, count(*) AS runs
+                FROM system.query.history
+                WHERE start_time >= current_timestamp() - INTERVAL {self.history_days} DAYS
+                  AND {condition}
+                GROUP BY statement_text, executed_by
+                ORDER BY runs DESC
+                LIMIT 2000"""
+            try:
+                rows = self.sql(q)
+            except Exception as exc:
+                self.warn(f"Query history (system.query.history) not available: {_short_err(exc)}")
+                return
+            for row in rows:
+                n += 1
+                yield CodeAsset(path=f"query history #{n} ({row.get('runs')} runs)", kind="query_history",
+                                language="sql", content=row.get("statement_text") or "",
+                                owner=row.get("executed_by"), modified_at=str(row.get("last_run") or "") or None,
+                                location="Query history")
 
     # ----------------------------------------------------------------- tables
     def _list_tables(self) -> List[Any]:

@@ -7,7 +7,7 @@
 # MAGIC | Where | What gets created |
 # MAGIC |---|---|
 # MAGIC | Schema `<catalog>.<schema>` | A volume `uploads` with CSV and Excel files; lookup tables (some loaded from those files, so lineage records it); a large fact table that should *not* be flagged; views with `CASE` mappings and `IN` lists |
-# MAGIC | Workspace folder | Python and SQL notebooks with hardcoded dicts, lists, `when()` chains, `createDataFrame` literals, `CASE` and `INSERT ... VALUES`, including copies of the same mapping that disagree; a plain `.py` file; CSV and Excel files |
+# MAGIC | Workspace folder | Python and SQL notebooks with hardcoded dicts, lists, `when()` chains, `createDataFrame` literals, `CASE`, and tables seeded from literal rows (one-row `INSERT ... VALUES` statements, `MERGE ... USING VALUES`, `CREATE TABLE AS VALUES`), including copies of the same mapping that disagree; a plain `.py` file; CSV and Excel files |
 # MAGIC | Optional | A job that references one notebook (never run), a saved SQL query with a long `IN` list, a CSV in DBFS `/FileStore` |
 # MAGIC
 # MAGIC Every object is listed in `_demo_manifest.json` in the workspace folder. Set **action** to `cleanup` and run again
@@ -245,6 +245,43 @@ ORDER_STATUS = {
 UOM_TO_EACH = {"EA": 1, "PR": 2, "DZ": 12, "BX": 24, "CS": 48, "PL": 960}
 '''
 
+NB_SEED_SQL = '''--__HEADER__
+--__MAGIC__ %md
+--__MAGIC__ # Seed reference tables
+--__MAGIC__ Run once per environment. Add new codes at the bottom.
+
+--__CMD__
+
+CREATE TABLE IF NOT EXISTS __FQ__.ref_payment_terms (term_code STRING, term_name STRING);
+
+INSERT INTO __FQ__.ref_payment_terms VALUES ('COD', 'Cash on delivery');
+INSERT INTO __FQ__.ref_payment_terms VALUES ('N7', 'Net 7 days');
+INSERT INTO __FQ__.ref_payment_terms VALUES ('N14', 'Net 14 days');
+INSERT INTO __FQ__.ref_payment_terms VALUES ('N30', 'Net 30 days');
+INSERT INTO __FQ__.ref_payment_terms VALUES ('EOM', 'End of month');
+INSERT INTO __FQ__.ref_payment_terms VALUES ('N60', 'Net 60 days');
+
+--__CMD__
+
+MERGE INTO __FQ__.ref_currency AS t
+USING (VALUES ('AUD', 'Australian Dollar'), ('NZD', 'New Zealand Dollar'), ('USD', 'US Dollar'),
+              ('EUR', 'Euro'), ('GBP', 'Pound Sterling')) AS s(currency_code, currency_name)
+ON t.currency_code = s.currency_code
+WHEN MATCHED THEN UPDATE SET *
+WHEN NOT MATCHED THEN INSERT *;
+
+--__CMD__
+
+CREATE OR REPLACE TABLE __FQ__.ref_uom AS
+SELECT * FROM VALUES ('EA', 'Each', 1), ('PR', 'Pair', 2), ('DZ', 'Dozen', 12), ('BX', 'Box', 24),
+                     ('CS', 'Case', 48), ('PL', 'Pallet', 960) AS t(uom_code, uom_name, each_qty);
+
+--__CMD__
+
+-- Run log (not reference data: the scanner sets this aside)
+INSERT INTO __FQ__.etl_audit_log VALUES ('seed_reference_data', 'completed');
+'''
+
 CAMPAIGN_CSV = "campaign_code,campaign_name,channel\nSPR26,Spring sale,Online\nEOFY,End of financial year,All\nBTS,Back to school,Retail\n"
 
 
@@ -322,6 +359,14 @@ def create():
     spark.sql(f"""COPY INTO {FQ}.ref_cost_centre FROM '{VOL}/cost_centres.csv'
                   FILEFORMAT = CSV FORMAT_OPTIONS ('header' = 'true')""")
     spark.sql(f"CREATE OR REPLACE TABLE {FQ}.ref_currency (currency_code STRING, currency_name STRING)")
+    spark.sql(f"CREATE OR REPLACE TABLE {FQ}.etl_audit_log (job STRING, status STRING)")
+    # Run the seeding notebook's statements here too, so system.query.history records INSERT/MERGE ... VALUES
+    # (on serverless compute and SQL warehouses).
+    spark.sql(f"DROP TABLE IF EXISTS {FQ}.ref_payment_terms")  # so a re-run doesn't duplicate the rows
+    for stmt in render(NB_SEED_SQL).split(";"):
+        body = "\n".join(l for l in stmt.split("\n") if l.strip() and not l.lstrip().startswith("--"))
+        if body.strip():
+            spark.sql(body)
     # A wide fact table: should NOT be reported as a lookup table
     cols = ", ".join([f"CAST(id % 97 AS DOUBLE) AS measure_{i}" for i in range(20)])
     spark.sql(f"""CREATE OR REPLACE TABLE {FQ}.sales_orders AS
@@ -352,11 +397,12 @@ def create():
     print(f"tables and views created in {CAT}.{SCH}")
 
     # --- workspace notebooks and files --------------------------------------------------
-    for sub in ("sales", "finance", "marketing/uploads", "shared_utils"):
+    for sub in ("sales", "finance", "marketing/uploads", "shared_utils", "reference"):
         w.workspace.mkdirs(f"{WS}/{sub}")
     notebooks = [("sales/sales_transform", NB_SALES, Language.PYTHON),
                  ("finance/finance_report", NB_FINANCE, Language.PYTHON),
                  ("finance/region_rollup", NB_REGION_SQL, Language.SQL),
+                 ("reference/seed_reference_data", NB_SEED_SQL, Language.SQL),
                  ("marketing/campaign_segments", NB_MARKETING, Language.PYTHON)]
     for rel, text, lang in notebooks:
         w.workspace.upload(f"{WS}/{rel}", render(text).encode(), format=ImportFormat.SOURCE, language=lang,

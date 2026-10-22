@@ -8,7 +8,7 @@ from typing import List
 from ..models import CodeAsset, CodeFinding, ScanConfig
 from ..notebook_parser import split_cells
 from .python_scanner import scan_python
-from .sql_scanner import scan_sql
+from .sql_scanner import combine_table_loads, is_table_load, scan_sql
 
 # Quoted strings that end in a spreadsheet/CSV extension (or a glob of them).
 _FILE_REF_RE = re.compile(
@@ -37,7 +37,14 @@ def find_file_references(text: str, line_offset: int = 1) -> List[FileReference]
     return refs
 
 
-def scan_code_asset(asset: CodeAsset, cfg: ScanConfig, dialect: str = "databricks") -> CodeScanOutput:
+def scan_code_asset(asset: CodeAsset, cfg: ScanConfig, dialect: str = "databricks",
+                    combine_loads: bool = True) -> CodeScanOutput:
+    """Scan one notebook / file / query / view.
+
+    Table loads from VALUES (INSERT/MERGE/CTAS) are combined per target table across all cells, including SQL
+    run through spark.sql(). Pass ``combine_loads=False`` to get them one per statement (the engine does this
+    for query history, which it combines across many statements itself).
+    """
     out = CodeScanOutput()
     out.file_refs = find_file_references(asset.content)
     cells = split_cells(asset.path, asset.content, asset.language, asset.format)
@@ -48,16 +55,19 @@ def scan_code_asset(asset: CodeAsset, cfg: ScanConfig, dialect: str = "databrick
             if err:
                 out.warnings.append(f"{asset.path}: {err}")
             for emb in embedded:
-                sql_findings, _ = scan_sql(emb.sql, cfg, dialect, emb.line)
+                sql_findings, _ = scan_sql(emb.sql, cfg, dialect, emb.line, combine_loads=False)
                 for f in sql_findings:
                     f.pattern = f.pattern.replace("sql_", "embedded_sql_", 1)
                 out.findings.extend(sql_findings)
         elif cell.language == "sql":
-            findings, warn = scan_sql(cell.source, cfg, dialect, cell.start_line)
+            findings, warn = scan_sql(cell.source, cfg, dialect, cell.start_line, combine_loads=False)
             out.findings.extend(findings)
             if warn:
                 out.warnings.append(f"{asset.path}: {warn}")
         # Scala and R cells: file references only (picked up above).
+
+    if combine_loads:
+        out.findings = combine_table_loads(out.findings, cfg)
 
     for f in out.findings:
         f.source_path = asset.path

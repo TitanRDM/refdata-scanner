@@ -9,6 +9,9 @@
 # MAGIC * **Hardcoded reference data in code**: Python dicts, lists and sets, `spark.createDataFrame([...])` literals,
 # MAGIC   `F.when().when()` chains, SQL `CASE` mappings, long `IN (...)` lists and `VALUES` tables, in notebooks,
 # MAGIC   workspace files, saved SQL queries and views
+# MAGIC * **Tables filled from literal rows**: `INSERT ... VALUES`, `MERGE ... USING (VALUES ...)` and
+# MAGIC   `CREATE TABLE AS VALUES`, combined per table (a script of one-row `INSERT`s is one finding), in code and in
+# MAGIC   query history
 # MAGIC * **Duplicates and drift**: the same list or mapping copied into several places, and copies that disagree
 # MAGIC
 # MAGIC **Safe to run:**

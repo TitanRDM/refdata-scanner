@@ -23,6 +23,9 @@ def _add_common(p: argparse.ArgumentParser) -> None:
     g.add_argument("--min-mapping-items", type=int, default=5, help="Report mappings with at least this many entries (default 5)")
     g.add_argument("--min-case-branches", type=int, default=5, help="Report CASE statements with at least this many WHENs (default 5)")
     g.add_argument("--min-inline-rows", type=int, default=3, help="Report inline tables with at least this many rows (default 3)")
+    g.add_argument("--min-insert-rows", type=int, default=2,
+                   help="Report tables filled from literal VALUES (INSERT/MERGE/CREATE TABLE AS) from this many rows "
+                        "per table; tables with reference-data style names count from 1 (default 2)")
     g.add_argument("--inspect-files", action="store_true",
                    help="Read CSV/Excel header rows (downloads up to 5 MB per file). Off by default.")
     g.add_argument("--redact", action="store_true",
@@ -34,6 +37,7 @@ def _add_common(p: argparse.ArgumentParser) -> None:
 def _config(args) -> ScanConfig:
     return ScanConfig(min_list_items=args.min_list_items, min_mapping_items=args.min_mapping_items,
                       min_case_branches=args.min_case_branches, min_inline_rows=args.min_inline_rows,
+                      min_insert_rows=args.min_insert_rows,
                       inspect_file_contents=args.inspect_files, redact=args.redact,
                       sample_values=0 if args.redact else args.sample_values)
 

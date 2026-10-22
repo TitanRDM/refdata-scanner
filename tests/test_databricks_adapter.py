@@ -28,6 +28,7 @@ cats = spark.read.csv("/Volumes/main/ref/uploads/categories.csv")
 """
 NB_FIN = """# Databricks notebook source
 STATE_MAP = {"NSW": "New South Wales", "QLD": "Queensland", "VIC": "Victoria", "SA": "South Australia", "WA": "West Australia"}
+spark.sql("INSERT INTO main.ref.lkp_status VALUES ('A', 'Active'), ('I', 'Inactive')")
 """
 
 
@@ -125,6 +126,22 @@ class FakeClient:
 def fake_sql(query):
     if "table_lineage" in query:
         return [{"source_path": "s3://bucket/landing/gl_accounts.xlsx", "target_table_full_name": "main.ref.lkp_status"}]
+    if "query.history" in query and "values" in query:  # statements that fill a table from VALUES
+        return [
+            # typed into the SQL editor one row at a time, by two people: one table, three rows
+            {"statement_text": "INSERT INTO main.ref.payment_terms VALUES ('N7', 'Net 7 days')",
+             "executed_by": "bob@x.com", "last_run": "2026-10-01", "runs": 1},
+            {"statement_text": "insert into main.ref.payment_terms values ('N14', 'Net 14 days')",
+             "executed_by": "amy@x.com", "last_run": "2026-10-02", "runs": 1},
+            {"statement_text": "INSERT INTO main.ref.payment_terms VALUES ('N30', 'Net 30 days')",
+             "executed_by": "amy@x.com", "last_run": "2026-10-03", "runs": 2},
+            # already in scanned code (/Shared/finance): skipped
+            {"statement_text": "INSERT INTO main.ref.lkp_status VALUES ('A', 'Active'), ('I', 'Inactive')",
+             "executed_by": "scanner@x.com", "last_run": "2026-10-03", "runs": 9},
+            # log table: noise
+            {"statement_text": "INSERT INTO main.ops.job_log VALUES ('nightly', 'ok'), ('weekly', 'ok')",
+             "executed_by": "svc@x.com", "last_run": "2026-10-03", "runs": 30},
+        ]
     if "query.history" in query:
         return [{"statement_text": "COPY INTO main.ref.x FROM 'dbfs:/FileStore/tables/cost_centres.csv'",
                  "executed_by": "bob@x.com", "last_run": "2026-10-01", "runs": 4}]
@@ -155,9 +172,19 @@ def test_databricks_scan_end_to_end(tmp_path):
     sources = {f.source_path for f in result.code_findings}
     assert "/Repos/me/refdata-scanner/x.py" not in sources  # excluded folder
     assert {"/Users/jane@x.com/sales", "/Shared/finance", "main.ref.v_region", "query: Channel report"} <= sources
-    assert not any(f.source_kind == "query_history" for f in result.code_findings)
 
-    fin = next(f for f in result.code_findings if f.source_path == "/Shared/finance")
+    # From query history, only table loads from VALUES are kept, combined per table
+    history = [f for f in result.code_findings if f.source_kind == "query_history"]
+    assert {f.name for f in history} == {"main.ref.payment_terms", "main.ops.job_log"}
+    terms = next(f for f in history if f.name == "main.ref.payment_terms")
+    assert terms.item_count == 3 and terms.statements == 3 and terms.source_path == "query history: main.ref.payment_terms"
+    assert terms.score >= 60 and not terms.likely_noise
+    assert next(f for f in history if f.name == "main.ops.job_log").likely_noise
+    in_code = [f for f in result.code_findings if f.name == "main.ref.lkp_status"]
+    assert len(in_code) == 1 and in_code[0].source_path == "/Shared/finance"
+    assert in_code[0].pattern == "embedded_sql_insert_values"
+
+    fin = next(f for f in result.code_findings if f.source_path == "/Shared/finance" and f.name == "STATE_MAP")
     assert fin.in_job and fin.group_conflict
     sales = next(f for f in result.code_findings if f.source_path == "/Users/jane@x.com/sales")
     assert sales.owner == "jane@x.com"

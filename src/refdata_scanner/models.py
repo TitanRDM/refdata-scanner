@@ -43,6 +43,10 @@ class ScanConfig:
     min_inline_rows: int = 3
     # Chained .when(...) calls count from this many branches.
     min_when_chain: int = 5
+    # A table filled only from literal VALUES (INSERT ... VALUES, MERGE ... USING VALUES, CREATE TABLE AS VALUES)
+    # counts from this many rows in total per target table and code asset. Tables with a reference-data
+    # style name (ref_, lkp_, _codes, status ...) count from a single row.
+    min_insert_rows: int = 2
     # Tables with at most this many columns are lookup-table candidates.
     max_lookup_table_columns: int = 12
     # Tables at or below this size (bytes) are lookup-table candidates (when size is known).
@@ -149,6 +153,8 @@ class CodeFinding:
     location: Optional[str] = None
     in_job: bool = False
     snippet: str = ""
+    row_width: Optional[int] = None  # columns per row, for inline tables and table loads
+    statements: int = 1  # for table loads: how many statements were combined into this finding
     # Filled in later
     id: str = ""
     fingerprint: str = ""

@@ -18,7 +18,7 @@ from .analysis import (
 )
 from .inspector import inspect_file
 from .models import FileAsset, ScanConfig, ScanResult
-from .scanners import scan_code_asset
+from .scanners import combine_table_loads, is_table_load, scan_code_asset
 
 # Only tables at or above this score are kept in the results.
 TABLE_CANDIDATE_MIN_SCORE = 35
@@ -59,21 +59,25 @@ def run_scan(adapter: PlatformAdapter, cfg: Optional[ScanConfig] = None, log: Op
     assets_with_findings = set()
     refs: Dict[str, List[str]] = defaultdict(list)
     findings = []
+    history_loads = []
     for asset in adapter.iter_code():
         code_assets += 1
-        out = scan_code_asset(asset, cfg, adapter.dialect)
+        is_history = asset.kind == "query_history"
+        out = scan_code_asset(asset, cfg, adapter.dialect, combine_loads=not is_history)
         result.warnings.extend(out.warnings)
         for ref in out.file_refs:
             refs[ref.path].append(f"{asset.path}:{ref.line}")
-        if asset.kind == "query_history":
-            # Ad hoc history is used only to see which files get read; its literals
-            # would double count code that is already scanned at its source.
+        if is_history:
+            # From ad hoc history keep only table loads from VALUES (typically reference data typed into the
+            # SQL editor and saved nowhere else); its other literals would double count code scanned at source.
+            history_loads.extend(f for f in out.findings if is_table_load(f.pattern))
             out.findings = []
         if out.findings:
             assets_with_findings.add(asset.path)
         findings.extend(out.findings)
         if code_assets % 200 == 0:
             log(f"  scanned {code_assets} code assets ...")
+    findings.extend(_history_table_loads(history_loads, findings, cfg))
     log(f"  scanned {code_assets} code asset(s), {len(findings)} raw finding(s)")
 
     # 4. Analysis -------------------------------------------------------------------
@@ -131,6 +135,25 @@ def run_scan(adapter: PlatformAdapter, cfg: Optional[ScanConfig] = None, log: Op
     result.finished_at = _now()
     log("Scan complete.")
     return result
+
+
+def _history_table_loads(history_loads, code_findings, cfg: ScanConfig):
+    """Combine INSERT/MERGE ... VALUES statements from query history per target table.
+
+    Tables already loaded from VALUES in scanned code are skipped: the history is most likely that code running.
+    """
+    if not history_loads:
+        return []
+    in_code = {(f.name or "").replace("`", "").lower() for f in code_findings if is_table_load(f.pattern)}
+    out = []
+    for f in combine_table_loads(history_loads, cfg):
+        if (f.name or "").replace("`", "").lower() in in_code:
+            continue
+        f.source_path = f"query history: {f.name or 'unnamed table'}"
+        f.source_kind = "query_history"
+        f.location = "Query history"
+        out.append(f)
+    return out
 
 
 def _apply_loads(files, tables, loads: Dict[str, List[str]]) -> None:
