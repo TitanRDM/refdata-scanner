@@ -85,18 +85,6 @@ scanned with pattern matching, which is less precise.
 
 No credentials to configure: inside a notebook the scanner uses your own identity, so it only sees what you can see.
 
-### Trying it on a test workspace
-
-A quiet workspace gives a quiet report. [`tools/databricks/create_demo_artifacts.py`](tools/databricks/create_demo_artifacts.py)
-fills a workspace with realistic reference data for the scanner to find: a schema with a volume of CSV and Excel
-files, lookup tables (some loaded from those files, so lineage picks them up), views with `CASE` mappings, notebooks
-with hardcoded dicts, lists and `when()` chains (including copies that disagree), a saved query and a job.
-Import it into your workspace, run it with *action* = `create`, then point `02_full_scan` at the schema and folder it
-prints. Run it again with *action* = `cleanup` to delete everything it created.
-
-Unlike the scanner, this notebook **writes** to the workspace, so it is not part of the zip bundle. Use it only
-where test objects are welcome.
-
 ### 3. Command line
 
 ```bash
@@ -214,8 +202,7 @@ hold notebooks, so the scanner would have to be downloaded at run time.
 
 ## About
 
-Built by [TitanRDM](https://titanrdm.com). Reference data that lives in spreadsheets and code has no owner, no approval
-workflow and no history. TitanRDM gives business users a governed place to maintain it, published straight into
+Built by [TitanRDM](https://titanrdm.com). TitanRDM gives business users a governed place to maintain it, published straight into
 Databricks, Snowflake and Fabric.
 
 Licensed under the [MIT License](LICENSE).
