@@ -1,6 +1,11 @@
-"""Build the importable Databricks bundle from the notebooks in notebooks/databricks.
+"""Build the Databricks downloads from the notebooks in notebooks/databricks.
 
-Produces dist/refdata-scanner-databricks.zip (or --out):
+Produces, in dist/ (or --out):
+
+1. refdata-scanner-install.py: a single notebook that installs everything below into the workspace
+   (Import > File, then Run all). This is the main route: importing one notebook always works.
+
+2. refdata-scanner-databricks.zip, which the installer carries inside it:
 
     refdata-scanner/01_quick_scan               SQL notebook
     refdata-scanner/02_full_scan                Python notebook
@@ -8,18 +13,20 @@ Produces dist/refdata-scanner-databricks.zip (or --out):
     refdata-scanner/lib/sqlglot/...             the SQL parser it uses (MIT licence), vendored
     refdata-scanner/lib/THIRD_PARTY.md          versions and licences of vendored code
 
-Import with Workspace > Import > File, choosing the .zip. The notebooks load
-everything from the lib folder, so a scan never installs, downloads or sends
+The zip can also be imported directly (Import > File), and is the readable copy of what the installer
+writes. The notebooks load everything from the lib folder, so a scan never installs, downloads or sends
 anything outside the workspace.
 
 There is deliberately no .dbc archive: a DBC can only hold notebooks, so the
 scanner would have to be downloaded at run time.
 
-Usage: python scripts/build_databricks_bundle.py [--out dist]
+Usage: python scripts/build_databricks_bundle.py [--out dist] [--version v0.1.1]
 """
 from __future__ import annotations
 
 import argparse
+import base64
+import hashlib
 import os
 import re
 import zipfile
@@ -29,6 +36,10 @@ NOTEBOOK_DIR = os.path.join(ROOT, "notebooks", "databricks")
 PACKAGE_DIR = os.path.join(ROOT, "src", "refdata_scanner")
 BUNDLE_FOLDER = "refdata-scanner"
 ZIP_NAME = "refdata-scanner-databricks.zip"
+INSTALLER_NAME = "refdata-scanner-install.py"
+INSTALLER_TEMPLATE = os.path.join(ROOT, "scripts", "installer_template.py")
+_CELL_CHARS = 200_000  # base64 characters per notebook cell
+_LINE_CHARS = 1_000  # characters per source line
 
 _HEADER_RE = re.compile(r"^(#|--)\s*Databricks notebook source\s*$")
 # A fixed timestamp keeps zip output identical between builds of the same source.
@@ -47,6 +58,15 @@ def _notebooks():
 
 
 def _write(zf: zipfile.ZipFile, arcname: str, data) -> None:
+    # Explicit entries for every folder: some unzip tools, including workspace import, only create folders
+    # that have their own entry, and silently drop files in folders that don't.
+    parts = arcname.split("/")[:-1]
+    for i in range(1, len(parts) + 1):
+        folder = "/".join(parts[:i]) + "/"
+        if folder not in zf.NameToInfo:
+            d = zipfile.ZipInfo(folder, date_time=_ZIP_DATE)
+            d.external_attr = (0o40755 << 16) | 0x10  # unix directory + MS-DOS directory flag
+            zf.writestr(d, b"")
     info = zipfile.ZipInfo(arcname, date_time=_ZIP_DATE)
     info.compress_type = zipfile.ZIP_DEFLATED
     info.external_attr = 0o644 << 16
@@ -105,13 +125,43 @@ def build_zip(out_dir: str) -> str:
     return path
 
 
+def _package_version() -> str:
+    with open(os.path.join(PACKAGE_DIR, "__init__.py"), encoding="utf-8") as fh:
+        m = re.search(r'__version__\s*=\s*"([^"]+)"', fh.read())
+    return "v" + m.group(1) if m else "dev"
+
+
+def build_installer(out_dir: str, zip_path: str, version: str) -> str:
+    """A single notebook carrying the zip as base64, which unpacks it into the workspace when run."""
+    with open(zip_path, "rb") as fh:
+        data = fh.read()
+    digest = hashlib.sha256(data).hexdigest()
+    encoded = base64.b64encode(data).decode("ascii")
+    cells = []
+    for start in range(0, len(encoded), _CELL_CHARS):
+        chunk = encoded[start:start + _CELL_CHARS]
+        lines = "\n".join(f'    "{chunk[i:i + _LINE_CHARS]}"' for i in range(0, len(chunk), _LINE_CHARS))
+        cells.append(f"PAYLOAD.append(\n{lines}\n)")
+    with open(INSTALLER_TEMPLATE, encoding="utf-8") as fh:
+        template = fh.read()
+    notebook = (template.replace("#__PAYLOAD_CELLS__", "\n\n# COMMAND ----------\n\n".join(cells))
+                .replace("__SHA256__", digest).replace("__VERSION__", version))
+    path = os.path.join(out_dir, INSTALLER_NAME)
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(notebook)
+    return path
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build the Databricks import bundle.")
+    parser = argparse.ArgumentParser(description="Build the Databricks downloads (installer notebook and zip).")
     parser.add_argument("--out", default=os.path.join(ROOT, "dist"))
+    parser.add_argument("--version", default=None, help="Version shown in the installer (default: package version)")
     args = parser.parse_args()
     os.makedirs(args.out, exist_ok=True)
-    built = build_zip(args.out)
-    print(f"built {os.path.relpath(built)} ({os.path.getsize(built):,} bytes)")
+    zip_path = build_zip(args.out)
+    installer = build_installer(args.out, zip_path, args.version or _package_version())
+    for built in (installer, zip_path):
+        print(f"built {os.path.relpath(built)} ({os.path.getsize(built):,} bytes)")
 
 
 if __name__ == "__main__":

@@ -71,8 +71,9 @@ for _rel, _root in (("lib", "."), (os.path.join("..", "..", "src"), os.path.join
         break
 else:
     raise RuntimeError(
-        "Scanner code not found next to this notebook. Import refdata-scanner-databricks.zip from "
-        "https://github.com/TitanRDM/refdata-scanner/releases and open 02_full_scan from the imported folder."
+        "Scanner code (the lib folder) not found next to this notebook. Install with refdata-scanner-install.py from "
+        "https://github.com/TitanRDM/refdata-scanner/releases (import it, then run it) and open 02_full_scan from "
+        "the refdata-scanner folder it creates."
     )
 
 # The SQL parser. Used from lib/ or the cluster if present; otherwise installed with pip from the package
