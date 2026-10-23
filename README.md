@@ -66,7 +66,8 @@ The report is shown in the notebook, and the inventories are displayed as sortab
 inventories. By default it goes in a `Results` folder next to the notebook, so if you imported the zip into your home
 folder, the results stay in your home folder too. Open the folder in the workspace browser to download `report.html`
 or any CSV. To put results somewhere else, set the *Output folder* widget to another workspace folder
-(for example `/Users/you@company.com/scans`) or a volume. The scanner never scans its own results.
+(for example `/Users/you@company.com/scans`, or `Home/scans` for a folder in your home folder) or a volume.
+The notebook checks it can write there before the scan starts. The scanner never scans its own results.
 
 **Running on a schedule.** To track reference data over time, run `02_full_scan` as a Databricks job (for example
 monthly) with the `output_path` parameter set to a volume such as `/Volumes/main/governance/refdata_scans`. A volume

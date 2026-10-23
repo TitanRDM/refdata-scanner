@@ -37,7 +37,7 @@ dbutils.widgets.text("catalog", "main", "1. Catalog")
 dbutils.widgets.text("schemas", "", "2. Schemas (comma-separated, blank = all)")
 dbutils.widgets.text("workspace_paths", "/", "3. Workspace folders (comma-separated)")
 dbutils.widgets.text("exclude_paths", "", "4. Folders to skip (comma-separated)")
-dbutils.widgets.text("output_path", "", "5. Output folder (blank = Results next to this notebook)")
+dbutils.widgets.text("output_path", "", "5. Output folder (blank = Results next to this notebook; Home/... = your home)")
 dbutils.widgets.dropdown("include_dbfs", "yes", ["yes", "no"], "6. Scan DBFS /FileStore")
 dbutils.widgets.dropdown("use_system_tables", "yes", ["yes", "no"], "7. Use lineage and query history")
 dbutils.widgets.dropdown("inspect_files", "no", ["no", "yes"], "8. Read CSV/Excel header rows")
@@ -97,8 +97,23 @@ except ImportError:
 from refdata_scanner import ScanConfig, scan_databricks
 
 
+ME = spark.sql("SELECT current_user()").first()[0]
+
+
+def _path(value):
+    """Turn a folder as typed in a widget into a real path. The workspace browser shows your home folder as
+    "Home", but its real path is /Workspace/Users/<you>; ~ means the same."""
+    p = value.strip().strip("'\"").strip().rstrip("/")
+    for alias in ("~", "Home", "/Home"):
+        if p == alias or p.startswith(alias + "/"):
+            return f"/Workspace/Users/{ME}" + p[len(alias):]
+    if p.startswith(("/Users/", "/Shared/", "/Repos/")) or p in ("/Users", "/Shared", "/Repos"):
+        return "/Workspace" + p  # workspace folders are mounted under /Workspace
+    return p
+
+
 def _list(name):
-    return [v.strip() for v in dbutils.widgets.get(name).split(",") if v.strip()]
+    return [_path(v) for v in dbutils.widgets.get(name).split(",") if v.strip()]
 
 
 catalog = dbutils.widgets.get("catalog").strip() or None
@@ -106,13 +121,18 @@ catalog = dbutils.widgets.get("catalog").strip() or None
 # Output folder. Default: a Results folder next to this notebook (in your home folder if that's where you
 # imported it). For scheduled runs, point this at a volume, e.g. /Volumes/main/governance/refdata_scans.
 # Each run writes its own timestamped sub-folder.
-output_path = dbutils.widgets.get("output_path").strip().rstrip("/")
-if not output_path:
-    output_path = os.path.join(NOTEBOOK_DIR, "Results")
-elif output_path.startswith(("/Users/", "/Shared/", "/Repos/")):
-    output_path = "/Workspace" + output_path  # workspace paths are mounted under /Workspace
+output_path = _path(dbutils.widgets.get("output_path")) or os.path.join(NOTEBOOK_DIR, "Results")
+if not output_path.startswith(("/Workspace/", "/Volumes/")):
+    raise ValueError(
+        f"Output folder {output_path!r} must be a workspace folder (e.g. /Workspace/Users/{ME}/scans, "
+        f"or Home/scans for your home folder) or a volume (e.g. /Volumes/main/default/scans).")
 stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
 out_dir = os.path.join(output_path, f"refdata-scan-{stamp}")
+try:  # check we can write there before spending time on the scan
+    os.makedirs(out_dir, exist_ok=True)
+except OSError as exc:
+    raise PermissionError(f"Can't create the output folder {out_dir}: {exc}. Check the folder exists and that you "
+                          f"can write to it, or leave the output folder widget blank.") from None
 
 config = ScanConfig(
     min_list_items=int(dbutils.widgets.get("min_list_items")),
