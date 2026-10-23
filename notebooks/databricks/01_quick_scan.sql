@@ -146,7 +146,7 @@ ORDER BY when_branches_total DESC
 
 -- MAGIC %md
 -- MAGIC ### 5. Lookup-table candidates
--- MAGIC Narrow tables with reference-data style names (`dim_`, `lkp_`, `_map`, `_codes`, `_type`, `status`, ...).
+-- MAGIC Narrow tables with reference-data style names (`lkp_`, `lu_`, `lookup`, `ref_`, `_map`, `xref`, `crosswalk`, `seed`).
 -- MAGIC These are often loaded once from a spreadsheet and then edited ad hoc.
 
 -- COMMAND ----------
@@ -173,7 +173,7 @@ WHERE t.table_catalog = rds_catalog
   AND t.table_type NOT IN ('VIEW', 'MATERIALIZED_VIEW', 'METRIC_VIEW')
   AND (size(rds_schemas) = 0 OR array_contains(rds_schemas, t.table_schema))
   AND c.column_count <= 12
-  AND lower(t.table_name) RLIKE '(^|_)(lkp|lu|lookup|ref|reference|refdata|map|mapping|mappings|xref|crosswalk|code|codes|dim|type|types|status|statuses|category|categories|region|regions|country|countries|currency|currencies|seed|hierarchy|segment|segments|channel|channels|uom|calendar|holidays?)(_|$)'
+  AND lower(t.table_name) RLIKE '(^|_)(lkp|lu|lookup|ref|reference|refdata|map|mapping|mappings|xref|crosswalk|seed)(_|$)'
 ORDER BY c.column_count, table_name
 
 -- COMMAND ----------
@@ -227,7 +227,7 @@ SELECT
       AND t.table_schema <> 'information_schema'
       AND t.table_type NOT IN ('VIEW', 'MATERIALIZED_VIEW', 'METRIC_VIEW')
       AND (size(rds_schemas) = 0 OR array_contains(rds_schemas, t.table_schema))
-      AND lower(t.table_name) RLIKE '(^|_)(lkp|lu|lookup|ref|reference|refdata|map|mapping|mappings|xref|crosswalk|code|codes|dim|type|types|status|statuses|category|categories|region|regions|country|countries|currency|currencies|seed|hierarchy|segment|segments|channel|channels|uom|calendar|holidays?)(_|$)'
+      AND lower(t.table_name) RLIKE '(^|_)(lkp|lu|lookup|ref|reference|refdata|map|mapping|mappings|xref|crosswalk|seed)(_|$)'
   ) AS lookup_table_candidates
 
 -- COMMAND ----------
