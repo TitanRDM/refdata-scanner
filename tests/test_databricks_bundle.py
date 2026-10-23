@@ -39,3 +39,14 @@ def test_bundle_runs_from_lib_alone(tmp_path):
     out = subprocess.run([sys.executable, "-I", "-S", "-c", code, str(lib)], capture_output=True, text=True)
     assert out.returncode == 0, out.stderr
     assert str(lib) in out.stdout
+
+
+def test_zip_has_folder_entries(tmp_path):
+    """Workspace import only creates folders that have their own entry in the zip; files in other folders are dropped."""
+    names = zipfile.ZipFile(bundle.build_zip(str(tmp_path))).namelist()
+    folders = {n for n in names if n.endswith("/")}
+    for n in names:
+        parts = n.rstrip("/").split("/")[:-1]
+        for i in range(1, len(parts) + 1):
+            assert "/".join(parts[:i]) + "/" in folders, n
+    assert names.index("refdata-scanner/lib/") < names.index("refdata-scanner/lib/THIRD_PARTY.md")

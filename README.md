@@ -34,8 +34,8 @@ Snowflake and Microsoft Fabric are on the [roadmap](#roadmap).
 
 ### 1. Five-minute SQL check (Databricks, nothing to install)
 
-Import [`notebooks/databricks/01_quick_scan.sql`](notebooks/databricks/01_quick_scan.sql) into your workspace (the
-installer below also adds it), edit the catalog in the first SQL cell (it defaults to your current catalog) and *Run all*. It uses Unity Catalog system tables and the information schema to show:
+Import [`notebooks/databricks/01_quick_scan.sql`](notebooks/databricks/01_quick_scan.sql) into your workspace (it is
+also in the zip), edit the catalog in the first SQL cell (it defaults to your current catalog) and *Run all*. It uses Unity Catalog system tables and the information schema to show:
 
 - tables that were loaded from CSV or Excel files (lineage)
 - SQL that read CSV or Excel files in the last 90 days (query history)
@@ -51,12 +51,11 @@ read access to `system.access` and `system.query`, which a metastore admin may h
 
 ### 2. Full scan in a Databricks notebook (recommended)
 
-1. Download `refdata-scanner-install.py` from the
+1. Download `refdata-scanner-databricks.zip` from the
    [latest release](https://github.com/TitanRDM/refdata-scanner/releases/latest).
-2. In Databricks, open the folder you want it in, choose **Import > File** and drop in the file. It imports as one
-   notebook. Run it (any compute, serverless is fine): it creates a `refdata-scanner` folder next to itself with both
-   notebooks and a `lib` folder holding the scanner and the [sqlglot](https://github.com/tobymao/sqlglot) SQL parser
-   it uses (MIT licence, included unmodified). You can delete the installer afterwards.
+2. In Databricks, open the folder you want it in, choose **Import > File** and drop in the zip. You get a
+   `refdata-scanner` folder with both notebooks and a `lib` folder holding the scanner and the
+   [sqlglot](https://github.com/tobymao/sqlglot) SQL parser it uses (MIT licence, included unmodified).
 3. Open `02_full_scan`, attach serverless or a Unity Catalog cluster (Databricks Runtime 15.4 LTS or later
    recommended), and run the first cell to create the widgets.
 4. Set the **catalog**, optional **schemas**, and the **workspace folders** to scan, then *Run all*.
@@ -64,7 +63,7 @@ read access to `system.access` and `system.query`, which a metastore admin may h
 The report is shown in the notebook, and the inventories are displayed as sortable tables.
 
 **Where the files go.** Each run writes a timestamped `refdata-scan-YYYYMMDD-HHMM` folder containing the report and
-inventories. By default it goes in a `Results` folder next to the notebook, so if you installed it in your home
+inventories. By default it goes in a `Results` folder next to the notebook, so if you imported the zip into your home
 folder, the results stay in your home folder too. Open the folder in the workspace browser to download `report.html`
 or any CSV. To put results somewhere else, set the *Output folder* widget to another workspace folder
 (for example `/Users/you@company.com/scans`) or a volume. The scanner never scans its own results.
@@ -75,18 +74,10 @@ keeps the history of scans in one governed place that others can be granted acce
 `summary.json` gives you counts to compare between runs. Set the job's other parameters (catalog, schemas, workspace
 folders) the same way; they match the widget names.
 
-**What the installer does.** It carries the files as one compressed, base64-encoded archive. When run, it checks
-the archive's SHA-256 checksum, unpacks it in memory and writes the files through the workspace's own API, as you.
-It contacts nothing outside the workspace. The archive is exactly `refdata-scanner-databricks.zip` from the same
-release, so you can compare the checksum (shown at the top of the installer) with that file, or read the files in
-the zip before running anything. Once installed, the scan notebooks install nothing and download nothing:
-everything they run is in the `refdata-scanner` folder.
+With the zip, the notebook installs nothing and downloads nothing: everything it runs is in the folder you
+imported, which you can read before running it.
 
-Why a notebook rather than the zip? Workspace import of a hand-built zip has proved unreliable (it can bring in the
-top-level notebooks but not the `lib` folder), while importing a single notebook always works. The zip is still
-published, now with explicit folder entries, and you can try importing it directly.
-
-You can also clone the repository as a **Git folder** instead of using the installer. The notebook then loads the
+You can also clone the repository as a **Git folder** instead of importing the zip. The notebook then loads the
 scanner from `src/`. The repository does not include sqlglot, so if the cluster doesn't already have it, the notebook
 installs it with `pip` from the package index your workspace uses (PyPI or your organisation's mirror). That is the
 only thing the scanner ever installs; set the *Install sqlglot* widget to `no` to skip it, in which case SQL is
@@ -103,7 +94,7 @@ with hardcoded dicts, lists and `when()` chains (including copies that disagree)
 Import it into your workspace, run it with *action* = `create`, then point `02_full_scan` at the schema and folder it
 prints. Run it again with *action* = `cleanup` to delete everything it created.
 
-Unlike the scanner, this notebook **writes** to the workspace, so it is not part of the installer. Use it only
+Unlike the scanner, this notebook **writes** to the workspace, so it is not part of the zip bundle. Use it only
 where test objects are welcome.
 
 ### 3. Command line
@@ -155,7 +146,7 @@ sequences. They stay in `code_findings.csv` with a `noise_reason`.
   header row and a row estimate are kept.
 - **Nothing leaves your environment.** No telemetry and no downloads. The only network calls are to your own
   platform's APIs, using your own identity. The single exception is the optional `pip install` of the sqlglot SQL
-  parser when running from a Git folder (see above); the installed bundle never needs it. A test
+  parser when running from a Git folder (see above); the zip bundle never needs it. A test
   (`tests/test_no_outbound_calls.py`) fails the build if any other route out is added.
 - **Your permissions.** It runs as you, so results only include what your account can see.
 - **Shareable output.** `--redact` (or the *Redact* widget) removes literal values, comments and user names from every
@@ -214,11 +205,11 @@ The scanners, analysis and reports are platform-neutral; a new platform only nee
 pip install -e ".[dev]"
 pytest
 refdata-scanner local examples/demo-workspace --inspect-files --out /tmp/demo
-python scripts/build_databricks_bundle.py   # builds dist/refdata-scanner-install.py and dist/refdata-scanner-databricks.zip
+python scripts/build_databricks_bundle.py   # builds dist/refdata-scanner-databricks.zip
 ```
 
-The `databricks-bundle` workflow builds both on every push to `main` (as a workflow artifact) and attaches them
-to the GitHub release when a `v*` tag is pushed or when it is run manually with a version. There is deliberately no `.dbc` archive: a DBC can only
+The `databricks-bundle` workflow builds the bundle on every push to `main` (as a workflow artifact) and attaches
+it to the GitHub release when a `v*` tag is pushed or when it is run manually with a version. There is deliberately no `.dbc` archive: a DBC can only
 hold notebooks, so the scanner would have to be downloaded at run time.
 
 ## About
