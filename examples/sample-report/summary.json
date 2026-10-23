@@ -1,6 +1,6 @@
 {
   "platform": "local",
-  "scanned_at": "2026-10-22T07:42:41+00:00",
+  "scanned_at": "2026-10-23T04:08:30+00:00",
   "stats": {
     "tables_scanned": 0,
     "code_assets_scanned": 5,
@@ -31,8 +31,8 @@
     "duplicate_groups": 2,
     "conflicting_groups": 1,
     "duplicated_findings": 6,
-    "estimated_reference_sets": 12,
-    "high_priority": 11
+    "estimated_reference_sets": 10,
+    "high_priority": 10
   },
   "scanner": "refdata-scanner",
   "scanner_url": "https://github.com/TitanRDM/refdata-scanner"

@@ -36,15 +36,16 @@ def name_tokens(name: str) -> List[str]:
 
 
 def has_name_hint(*names: Optional[str]) -> bool:
-    """True if a name contains a word typical of reference data (map, lookup, codes, region ...)."""
+    """True if a name contains a word that marks reference data (lkp, lookup, ref, map, xref, seed ...).
+
+    Words must be whole parts of the name (split on non-letters and camelCase), plural forms included:
+    ref_currency, STATE_MAP, productLookups match; prefix_table, bitmap do not.
+    """
     for n in names:
         if not n:
             continue
         for tok in name_tokens(n):
-            singular = tok[:-3] + "y" if tok.endswith("ies") else tok[:-1] if tok.endswith("s") and len(tok) > 3 else tok
-            if tok in _HINTS or singular in _HINTS:
-                return True
-            if tok.startswith(("lkp", "lu", "ref", "dim", "map", "xref")) and len(tok) <= 6:
+            if tok in _HINTS or (tok.endswith("s") and tok[:-1] in _HINTS):
                 return True
     return False
 

@@ -26,9 +26,9 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92em}
 
 </style></head><body><main>
 <h1>Reference Data Scan</h1>
-<div class='scope'>Platform: Local | Paths: examples/demo-workspace | Scanned: 2026-10-22 07:42 UTC</div>
+<div class='scope'>Platform: Local | Paths: examples/demo-workspace | Scanned: 2026-10-23 04:08 UTC</div>
 <div class='cards'>
-<div class='card'><div class='n'>12</div><div class='l'>Reference data sets (estimated)</div></div>
+<div class='card'><div class='n'>10</div><div class='l'>Reference data sets (estimated)</div></div>
 <div class='card'><div class='n'>4</div><div class='l'>CSV / Excel files</div></div>
 <div class='card'><div class='n'>0</div><div class='l'>Lookup-table candidates</div></div>
 <div class='card'><div class='n'>12</div><div class='l'>Hardcoded lists &amp; mappings</div></div>
@@ -47,29 +47,29 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92em}
 <h2>Top candidates for a managed reference data service</h2>
 <p>Ranked by how likely each item is to be reference data and how much risk it carries. Scores: 60+ High, 35-59 Medium.</p>
 <div class='tbl'><table><thead><tr><th>Score</th><th>Priority</th><th>Type</th><th>Where</th><th>What</th><th>Name</th><th>Why</th></tr></thead><tbody>
-<tr><td>95</td><td><span class='pill High'>High</span></td><td>File</td><td class='path'>/Repos/analytics/dbt_project/seeds/country_codes.csv</td><td>csv</td><td></td><td>dbt seed (reference data by definition); reference-data style name; small file</td></tr>
 <tr><td>90</td><td><span class='pill High'>High</span></td><td>File</td><td class='path'>/Shared/finance/gl_account_mapping.xlsx</td><td>xlsx</td><td></td><td>reference-data style name; read by 1 code location(s); small file; spreadsheet (likely maintained by hand)</td></tr>
-<tr><td>84</td><td><span class='pill High'>High</span></td><td>Code</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:14</td><td>SQL CASE mapping</td><td>state_name</td><td>hardcoded mapping; reference-data style name; values look like codes; repeated in 4 places; copies disagree</td></tr>
 <tr><td>84</td><td><span class='pill High'>High</span></td><td>Code</td><td class='path'>/Shared/finance/finance_report.py:5</td><td>Python dict (code -&gt; label)</td><td>STATE_MAP</td><td>hardcoded mapping; reference-data style name; values look like codes; repeated in 4 places; copies disagree</td></tr>
 <tr><td>84</td><td><span class='pill High'>High</span></td><td>Code</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:10</td><td>Python dict (code -&gt; label)</td><td>STATE_MAP</td><td>hardcoded mapping; reference-data style name; values look like codes; repeated in 4 places; copies disagree</td></tr>
 <tr><td>82</td><td><span class='pill High'>High</span></td><td>Code</td><td class='path'>/Shared/finance/region_rollup.sql:23</td><td>SQL INSERT ... VALUES inside spark.sql()</td><td>main.reference.currency</td><td>hardcoded mapping; reference-data style name; table contents maintained as literal VALUES in code; values look like codes; repeated in 2 places</td></tr>
 <tr><td>82</td><td><span class='pill High'>High</span></td><td>Code</td><td class='path'>/Shared/finance/seed_reference_data.sql:14</td><td>SQL MERGE ... USING VALUES</td><td>main.finance.ref_currency</td><td>hardcoded mapping; reference-data style name; table contents maintained as literal VALUES in code; values look like codes; repeated in 2 places</td></tr>
-<tr><td>80</td><td><span class='pill High'>High</span></td><td>File</td><td class='path'>/FileStore/tables/cost_centres.csv</td><td>csv</td><td></td><td>reference-data style name; manual upload location; small file</td></tr>
-<tr><td>80</td><td><span class='pill High'>High</span></td><td>File</td><td class='path'>/FileStore/tables/product_categories.csv</td><td>csv</td><td></td><td>reference-data style name; manual upload location; small file</td></tr>
-<tr><td>73</td><td><span class='pill High'>High</span></td><td>Code</td><td class='path'>/Shared/finance/region_rollup.sql:12</td><td>SQL CASE mapping</td><td>sales_region</td><td>hardcoded mapping; reference-data style name; values look like codes; repeated in 4 places</td></tr>
+<tr><td>80</td><td><span class='pill High'>High</span></td><td>File</td><td class='path'>/Repos/analytics/dbt_project/seeds/country_codes.csv</td><td>csv</td><td></td><td>dbt seed (reference data by definition); small file</td></tr>
+<tr><td>69</td><td><span class='pill High'>High</span></td><td>Code</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:14</td><td>SQL CASE mapping</td><td>state_name</td><td>hardcoded mapping; values look like codes; repeated in 4 places; copies disagree</td></tr>
 <tr><td>67</td><td><span class='pill High'>High</span></td><td>Code</td><td class='path'>/Shared/finance/seed_reference_data.sql:5</td><td>SQL INSERT ... VALUES</td><td>main.finance.ref_payment_terms</td><td>hardcoded mapping; reference-data style name; table contents maintained as literal VALUES in code; 5 separate statements; values look like codes</td></tr>
-<tr><td>58</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Shared/finance/finance_report.py:30</td><td>DataFrame built from literals</td><td>account_groups</td><td>hardcoded mapping; reference-data style name; values look like codes</td></tr>
-<tr><td>57</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:11</td><td>SQL CASE mapping</td><td>segment</td><td>hardcoded mapping; reference-data style name; values look like codes</td></tr>
-<tr><td>57</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:31</td><td>PySpark when() chain</td><td>channel</td><td>hardcoded mapping; reference-data style name; values look like codes</td></tr>
-<tr><td>46</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Shared/finance/finance_report.py:16</td><td>Python list</td><td>COST_CENTRES</td><td>hardcoded list; reference-data style name; values look like codes</td></tr>
-<tr><td>46</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:49</td><td>SQL IN (...) list</td><td>product_code</td><td>hardcoded list; reference-data style name; values look like codes</td></tr>
+<tr><td>65</td><td><span class='pill High'>High</span></td><td>File</td><td class='path'>/FileStore/tables/cost_centres.csv</td><td>csv</td><td></td><td>manual upload location; small file</td></tr>
+<tr><td>65</td><td><span class='pill High'>High</span></td><td>File</td><td class='path'>/FileStore/tables/product_categories.csv</td><td>csv</td><td></td><td>manual upload location; small file</td></tr>
+<tr><td>58</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Shared/finance/region_rollup.sql:12</td><td>SQL CASE mapping</td><td>sales_region</td><td>hardcoded mapping; values look like codes; repeated in 4 places</td></tr>
+<tr><td>43</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Shared/finance/finance_report.py:30</td><td>DataFrame built from literals</td><td>account_groups</td><td>hardcoded mapping; values look like codes</td></tr>
+<tr><td>42</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:11</td><td>SQL CASE mapping</td><td>segment</td><td>hardcoded mapping; values look like codes</td></tr>
+<tr><td>42</td><td><span class='pill Medium'>Medium</span></td><td>Code</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:31</td><td>PySpark when() chain</td><td>channel</td><td>hardcoded mapping; values look like codes</td></tr>
+<tr><td>31</td><td><span class='pill Low'>Low</span></td><td>Code</td><td class='path'>/Shared/finance/finance_report.py:16</td><td>Python list</td><td>COST_CENTRES</td><td>hardcoded list; values look like codes</td></tr>
+<tr><td>31</td><td><span class='pill Low'>Low</span></td><td>Code</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:49</td><td>SQL IN (...) list</td><td>product_code</td><td>hardcoded list; values look like codes</td></tr>
 </tbody></table></div>
 <h2>CSV and Excel files</h2>
 <div class='tbl'><table><thead><tr><th>Score</th><th>Path</th><th>Size</th><th>Modified</th><th>Owner</th><th>Read by code</th><th>Loaded into</th></tr></thead><tbody>
-<tr><td>95</td><td class='path'>/Repos/analytics/dbt_project/seeds/country_codes.csv</td><td>89 B</td><td>2026-10-09</td><td></td><td>-</td><td>-</td></tr>
 <tr><td>90</td><td class='path'>/Shared/finance/gl_account_mapping.xlsx</td><td>5.2 KB</td><td>2026-10-09</td><td></td><td>1</td><td>-</td></tr>
-<tr><td>80</td><td class='path'>/FileStore/tables/cost_centres.csv</td><td>79 B</td><td>2026-10-09</td><td></td><td>-</td><td>-</td></tr>
-<tr><td>80</td><td class='path'>/FileStore/tables/product_categories.csv</td><td>50 B</td><td>2026-10-09</td><td></td><td>-</td><td>-</td></tr>
+<tr><td>80</td><td class='path'>/Repos/analytics/dbt_project/seeds/country_codes.csv</td><td>89 B</td><td>2026-10-09</td><td></td><td>-</td><td>-</td></tr>
+<tr><td>65</td><td class='path'>/FileStore/tables/cost_centres.csv</td><td>79 B</td><td>2026-10-09</td><td></td><td>-</td><td>-</td></tr>
+<tr><td>65</td><td class='path'>/FileStore/tables/product_categories.csv</td><td>50 B</td><td>2026-10-09</td><td></td><td>-</td><td>-</td></tr>
 </tbody></table></div>
 <h2>Hardcoded reference data by pattern</h2>
 <div class='tbl'><table><thead><tr><th>Pattern</th><th>Count</th><th>Values</th></tr></thead><tbody>
@@ -85,18 +85,18 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92em}
 </tbody></table></div>
 <h2>Hardcoded lists and mappings in code</h2>
 <div class='tbl'><table><thead><tr><th>Score</th><th>Location</th><th>Pattern</th><th>Name</th><th>Items</th><th>Group</th><th>Sample</th></tr></thead><tbody>
-<tr><td>84</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:14</td><td>SQL CASE mapping</td><td>state_name</td><td>8</td><td>G001</td><td>NSW -&gt; New South Wales, QLD -&gt; Queensland, VIC -&gt; Victoria, SA -&gt; South Australia, WA -&gt; Western Australia, ... (+3)</td></tr>
 <tr><td>84</td><td class='path'>/Shared/finance/finance_report.py:5</td><td>Python dict (code -&gt; label)</td><td>STATE_MAP</td><td>8</td><td>G001</td><td>NSW -&gt; New South Wales, QLD -&gt; Queensland, VIC -&gt; Victoria, SA -&gt; South Australia, WA -&gt; West Australia, ... (+3)</td></tr>
 <tr><td>84</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:10</td><td>Python dict (code -&gt; label)</td><td>STATE_MAP</td><td>8</td><td>G001</td><td>NSW -&gt; New South Wales, QLD -&gt; Queensland, VIC -&gt; Victoria, SA -&gt; South Australia, WA -&gt; Western Australia, ... (+3)</td></tr>
 <tr><td>82</td><td class='path'>/Shared/finance/region_rollup.sql:23</td><td>SQL INSERT ... VALUES inside spark.sql()</td><td>main.reference.currency</td><td>5</td><td>G002</td><td>AUD -&gt; Australian Dollar, NZD -&gt; New Zealand Dollar, USD -&gt; US Dollar, EUR -&gt; Euro, GBP -&gt; Pound Sterling</td></tr>
 <tr><td>82</td><td class='path'>/Shared/finance/seed_reference_data.sql:14</td><td>SQL MERGE ... USING VALUES</td><td>main.finance.ref_currency</td><td>5</td><td>G002</td><td>AUD -&gt; Australian Dollar, NZD -&gt; New Zealand Dollar, USD -&gt; US Dollar, EUR -&gt; Euro, GBP -&gt; Pound Sterling</td></tr>
-<tr><td>73</td><td class='path'>/Shared/finance/region_rollup.sql:12</td><td>SQL CASE mapping</td><td>sales_region</td><td>7</td><td>G001</td><td>NSW -&gt; East, VIC -&gt; East, QLD -&gt; North, NT -&gt; North, WA -&gt; West, ... (+2)</td></tr>
+<tr><td>69</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:14</td><td>SQL CASE mapping</td><td>state_name</td><td>8</td><td>G001</td><td>NSW -&gt; New South Wales, QLD -&gt; Queensland, VIC -&gt; Victoria, SA -&gt; South Australia, WA -&gt; Western Australia, ... (+3)</td></tr>
 <tr><td>67</td><td class='path'>/Shared/finance/seed_reference_data.sql:5</td><td>SQL INSERT ... VALUES</td><td>main.finance.ref_payment_terms</td><td>5</td><td></td><td>COD -&gt; Cash on delivery, N7 -&gt; Net 7 days, N14 -&gt; Net 14 days, N30 -&gt; Net 30 days, EOM -&gt; End of month</td></tr>
-<tr><td>58</td><td class='path'>/Shared/finance/finance_report.py:30</td><td>DataFrame built from literals</td><td>account_groups</td><td>6</td><td></td><td>4000 -&gt; Revenue, 4100 -&gt; Revenue, 5000 -&gt; Cost of Sales, 6000 -&gt; Operating Expenses, 6100 -&gt; Operating Expenses, ... (+1)</td></tr>
-<tr><td>57</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:11</td><td>SQL CASE mapping</td><td>segment</td><td>5</td><td></td><td>E -&gt; Enterprise, M -&gt; Mid-market, S -&gt; Small business, C -&gt; Consumer, G -&gt; Government</td></tr>
-<tr><td>57</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:31</td><td>PySpark when() chain</td><td>channel</td><td>5</td><td></td><td>01 -&gt; Retail, 02 -&gt; Wholesale, 03 -&gt; Online, 04 -&gt; Marketplace, 05 -&gt; Phone</td></tr>
-<tr><td>46</td><td class='path'>/Shared/finance/finance_report.py:16</td><td>Python list</td><td>COST_CENTRES</td><td>12</td><td></td><td>CC100, CC110, CC120, CC130, CC200, ... (+7)</td></tr>
-<tr><td>46</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:49</td><td>SQL IN (...) list</td><td>product_code</td><td>12</td><td></td><td>P100, P101, P102, P103, P104, ... (+7)</td></tr>
+<tr><td>58</td><td class='path'>/Shared/finance/region_rollup.sql:12</td><td>SQL CASE mapping</td><td>sales_region</td><td>7</td><td>G001</td><td>NSW -&gt; East, VIC -&gt; East, QLD -&gt; North, NT -&gt; North, WA -&gt; West, ... (+2)</td></tr>
+<tr><td>43</td><td class='path'>/Shared/finance/finance_report.py:30</td><td>DataFrame built from literals</td><td>account_groups</td><td>6</td><td></td><td>4000 -&gt; Revenue, 4100 -&gt; Revenue, 5000 -&gt; Cost of Sales, 6000 -&gt; Operating Expenses, 6100 -&gt; Operating Expenses, ... (+1)</td></tr>
+<tr><td>42</td><td class='path'>/Repos/analytics/dbt_project/models/stg_customers.sql:11</td><td>SQL CASE mapping</td><td>segment</td><td>5</td><td></td><td>E -&gt; Enterprise, M -&gt; Mid-market, S -&gt; Small business, C -&gt; Consumer, G -&gt; Government</td></tr>
+<tr><td>42</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:31</td><td>PySpark when() chain</td><td>channel</td><td>5</td><td></td><td>01 -&gt; Retail, 02 -&gt; Wholesale, 03 -&gt; Online, 04 -&gt; Marketplace, 05 -&gt; Phone</td></tr>
+<tr><td>31</td><td class='path'>/Shared/finance/finance_report.py:16</td><td>Python list</td><td>COST_CENTRES</td><td>12</td><td></td><td>CC100, CC110, CC120, CC130, CC200, ... (+7)</td></tr>
+<tr><td>31</td><td class='path'>/Users/jane.doe@contoso.com/sales_transform.py:49</td><td>SQL IN (...) list</td><td>product_code</td><td>12</td><td></td><td>P100, P101, P102, P103, P104, ... (+7)</td></tr>
 </tbody></table></div>
 <h2>Hotspots by location</h2>
 <div class='tbl'><table><thead><tr><th>Location</th><th>Files</th><th>Tables</th><th>Code</th><th>Total</th></tr></thead><tbody>

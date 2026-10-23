@@ -66,10 +66,12 @@ def test_column_lists_and_config_flagged_as_noise():
 
 
 def test_name_hints():
-    assert has_name_hint("dim_customer_type")
-    assert has_name_hint("countryCodes")
-    assert not has_name_hint("statement")
-    assert not has_name_hint("raw_orders")
+    for name in ("lkp_order_status", "lu_country", "productLookups", "ref_currency", "main.ref.status", "refdata_x",
+                 "STATE_MAP", "gl_account_mapping.xlsx", "xref_state_region", "crosswalk", "country_seeds"):
+        assert has_name_hint(name), name
+    for name in ("dim_customer_type", "countryCodes", "order_status", "statement", "raw_orders", "prefix_table",
+                 "bitmap", "lumber"):
+        assert not has_name_hint(name), name
 
 
 def test_file_reference_linking():

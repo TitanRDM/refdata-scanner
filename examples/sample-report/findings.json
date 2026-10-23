@@ -5,35 +5,10 @@
    "examples/demo-workspace"
   ]
  },
- "started_at": "2026-10-22T07:42:41+00:00",
- "finished_at": "2026-10-22T07:42:41+00:00",
+ "started_at": "2026-10-23T04:08:30+00:00",
+ "finished_at": "2026-10-23T04:08:30+00:00",
  "run_by": null,
  "files": [
-  {
-   "path": "/Repos/analytics/dbt_project/seeds/country_codes.csv",
-   "name": "country_codes.csv",
-   "extension": ".csv",
-   "area": "local",
-   "container": "/Repos/analytics/dbt_project/seeds",
-   "size_bytes": 89,
-   "modified_at": "2026-10-09T05:41:21+00:00",
-   "owner": null,
-   "referenced_by": [],
-   "loaded_into": [],
-   "header": [
-    "country_code",
-    "country_name"
-   ],
-   "row_estimate": 4,
-   "sheet_count": null,
-   "is_dbt_seed": true,
-   "score": 95,
-   "reasons": [
-    "dbt seed (reference data by definition)",
-    "reference-data style name",
-    "small file"
-   ]
-  },
   {
    "path": "/Shared/finance/gl_account_mapping.xlsx",
    "name": "gl_account_mapping.xlsx",
@@ -64,6 +39,30 @@
    ]
   },
   {
+   "path": "/Repos/analytics/dbt_project/seeds/country_codes.csv",
+   "name": "country_codes.csv",
+   "extension": ".csv",
+   "area": "local",
+   "container": "/Repos/analytics/dbt_project/seeds",
+   "size_bytes": 89,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "owner": null,
+   "referenced_by": [],
+   "loaded_into": [],
+   "header": [
+    "country_code",
+    "country_name"
+   ],
+   "row_estimate": 4,
+   "sheet_count": null,
+   "is_dbt_seed": true,
+   "score": 80,
+   "reasons": [
+    "dbt seed (reference data by definition)",
+    "small file"
+   ]
+  },
+  {
    "path": "/FileStore/tables/cost_centres.csv",
    "name": "cost_centres.csv",
    "extension": ".csv",
@@ -82,9 +81,8 @@
    "row_estimate": 3,
    "sheet_count": null,
    "is_dbt_seed": false,
-   "score": 80,
+   "score": 65,
    "reasons": [
-    "reference-data style name",
     "manual upload location",
     "small file"
    ]
@@ -107,9 +105,8 @@
    "row_estimate": 2,
    "sheet_count": null,
    "is_dbt_seed": false,
-   "score": 80,
+   "score": 65,
    "reasons": [
-    "reference-data style name",
     "manual upload location",
     "small file"
    ]
@@ -117,80 +114,6 @@
  ],
  "tables": [],
  "code_findings": [
-  {
-   "source_path": "/Repos/analytics/dbt_project/models/stg_customers.sql",
-   "source_kind": "dbt_model",
-   "language": "sql",
-   "line": 14,
-   "pattern": "sql_case",
-   "shape": "mapping",
-   "item_count": 8,
-   "name": "state_name",
-   "values": [
-    "NSW",
-    "QLD",
-    "VIC",
-    "SA",
-    "WA",
-    "TAS",
-    "NT",
-    "ACT"
-   ],
-   "pairs": [
-    [
-     "NSW",
-     "New South Wales"
-    ],
-    [
-     "QLD",
-     "Queensland"
-    ],
-    [
-     "VIC",
-     "Victoria"
-    ],
-    [
-     "SA",
-     "South Australia"
-    ],
-    [
-     "WA",
-     "Western Australia"
-    ],
-    [
-     "TAS",
-     "Tasmania"
-    ],
-    [
-     "NT",
-     "Northern Territory"
-    ],
-    [
-     "ACT",
-     "ACT"
-    ]
-   ],
-   "owner": null,
-   "modified_at": "2026-10-09T05:41:21+00:00",
-   "location": "/Repos/analytics/dbt_project/models",
-   "in_job": false,
-   "snippet": "CASE WHEN state = 'NSW' THEN 'New South Wales' WHEN state = 'QLD' THEN 'Queensland' WHEN state = 'VIC' THEN 'Victoria' WHEN state = 'SA' THEN 'South Australia' WHEN state = 'WA' THEN 'Western Australia' WHEN state = 'TAS' THEN 'Tasmania' WH...",
-   "row_width": null,
-   "statements": 1,
-   "id": "C00002",
-   "fingerprint": "f758dabb36e2",
-   "group_id": "G001",
-   "group_conflict": true,
-   "likely_noise": null,
-   "score": 84,
-   "reasons": [
-    "hardcoded mapping",
-    "reference-data style name",
-    "values look like codes",
-    "repeated in 4 places",
-    "copies disagree"
-   ]
-  },
   {
    "source_path": "/Shared/finance/finance_report.py",
    "source_kind": "notebook",
@@ -458,71 +381,76 @@
    ]
   },
   {
-   "source_path": "/Shared/finance/region_rollup.sql",
-   "source_kind": "notebook",
+   "source_path": "/Repos/analytics/dbt_project/models/stg_customers.sql",
+   "source_kind": "dbt_model",
    "language": "sql",
-   "line": 12,
+   "line": 14,
    "pattern": "sql_case",
    "shape": "mapping",
-   "item_count": 7,
-   "name": "sales_region",
+   "item_count": 8,
+   "name": "state_name",
    "values": [
     "NSW",
-    "VIC",
     "QLD",
-    "NT",
-    "WA",
+    "VIC",
     "SA",
-    "TAS"
+    "WA",
+    "TAS",
+    "NT",
+    "ACT"
    ],
    "pairs": [
     [
      "NSW",
-     "East"
-    ],
-    [
-     "VIC",
-     "East"
+     "New South Wales"
     ],
     [
      "QLD",
-     "North"
+     "Queensland"
     ],
     [
-     "NT",
-     "North"
-    ],
-    [
-     "WA",
-     "West"
+     "VIC",
+     "Victoria"
     ],
     [
      "SA",
-     "South"
+     "South Australia"
+    ],
+    [
+     "WA",
+     "Western Australia"
     ],
     [
      "TAS",
-     "South"
+     "Tasmania"
+    ],
+    [
+     "NT",
+     "Northern Territory"
+    ],
+    [
+     "ACT",
+     "ACT"
     ]
    ],
    "owner": null,
    "modified_at": "2026-10-09T05:41:21+00:00",
-   "location": "/Shared/finance",
+   "location": "/Repos/analytics/dbt_project/models",
    "in_job": false,
-   "snippet": "CASE state WHEN 'NSW' THEN 'East' WHEN 'VIC' THEN 'East' WHEN 'QLD' THEN 'North' WHEN 'NT' THEN 'North' WHEN 'WA' THEN 'West' WHEN 'SA' THEN 'South' WHEN 'TAS' THEN 'South' ELSE 'Other' END",
+   "snippet": "CASE WHEN state = 'NSW' THEN 'New South Wales' WHEN state = 'QLD' THEN 'Queensland' WHEN state = 'VIC' THEN 'Victoria' WHEN state = 'SA' THEN 'South Australia' WHEN state = 'WA' THEN 'Western Australia' WHEN state = 'TAS' THEN 'Tasmania' WH...",
    "row_width": null,
    "statements": 1,
-   "id": "C00007",
-   "fingerprint": "449e11ec7d98",
+   "id": "C00002",
+   "fingerprint": "f758dabb36e2",
    "group_id": "G001",
-   "group_conflict": false,
+   "group_conflict": true,
    "likely_noise": null,
-   "score": 73,
+   "score": 69,
    "reasons": [
     "hardcoded mapping",
-    "reference-data style name",
     "values look like codes",
-    "repeated in 4 places"
+    "repeated in 4 places",
+    "copies disagree"
    ]
   },
   {
@@ -585,6 +513,73 @@
    ]
   },
   {
+   "source_path": "/Shared/finance/region_rollup.sql",
+   "source_kind": "notebook",
+   "language": "sql",
+   "line": 12,
+   "pattern": "sql_case",
+   "shape": "mapping",
+   "item_count": 7,
+   "name": "sales_region",
+   "values": [
+    "NSW",
+    "VIC",
+    "QLD",
+    "NT",
+    "WA",
+    "SA",
+    "TAS"
+   ],
+   "pairs": [
+    [
+     "NSW",
+     "East"
+    ],
+    [
+     "VIC",
+     "East"
+    ],
+    [
+     "QLD",
+     "North"
+    ],
+    [
+     "NT",
+     "North"
+    ],
+    [
+     "WA",
+     "West"
+    ],
+    [
+     "SA",
+     "South"
+    ],
+    [
+     "TAS",
+     "South"
+    ]
+   ],
+   "owner": null,
+   "modified_at": "2026-10-09T05:41:21+00:00",
+   "location": "/Shared/finance",
+   "in_job": false,
+   "snippet": "CASE state WHEN 'NSW' THEN 'East' WHEN 'VIC' THEN 'East' WHEN 'QLD' THEN 'North' WHEN 'NT' THEN 'North' WHEN 'WA' THEN 'West' WHEN 'SA' THEN 'South' WHEN 'TAS' THEN 'South' ELSE 'Other' END",
+   "row_width": null,
+   "statements": 1,
+   "id": "C00007",
+   "fingerprint": "449e11ec7d98",
+   "group_id": "G001",
+   "group_conflict": false,
+   "likely_noise": null,
+   "score": 58,
+   "reasons": [
+    "hardcoded mapping",
+    "values look like codes",
+    "repeated in 4 places"
+   ]
+  },
+  {
    "source_path": "/Shared/finance/finance_report.py",
    "source_kind": "notebook",
    "language": "python",
@@ -639,10 +634,9 @@
    "group_id": null,
    "group_conflict": false,
    "likely_noise": null,
-   "score": 58,
+   "score": 43,
    "reasons": [
     "hardcoded mapping",
-    "reference-data style name",
     "values look like codes"
    ]
   },
@@ -696,10 +690,9 @@
    "group_id": null,
    "group_conflict": false,
    "likely_noise": null,
-   "score": 57,
+   "score": 42,
    "reasons": [
     "hardcoded mapping",
-    "reference-data style name",
     "values look like codes"
    ]
   },
@@ -753,10 +746,9 @@
    "group_id": null,
    "group_conflict": false,
    "likely_noise": null,
-   "score": 57,
+   "score": 42,
    "reasons": [
     "hardcoded mapping",
-    "reference-data style name",
     "values look like codes"
    ]
   },
@@ -796,10 +788,9 @@
    "group_id": null,
    "group_conflict": false,
    "likely_noise": null,
-   "score": 46,
+   "score": 31,
    "reasons": [
     "hardcoded list",
-    "reference-data style name",
     "values look like codes"
    ]
   },
@@ -839,10 +830,9 @@
    "group_id": null,
    "group_conflict": false,
    "likely_noise": null,
-   "score": 46,
+   "score": 31,
    "reasons": [
     "hardcoded list",
-    "reference-data style name",
     "values look like codes"
    ]
   },
@@ -1016,8 +1006,8 @@
   "duplicate_groups": 2,
   "conflicting_groups": 1,
   "duplicated_findings": 6,
-  "estimated_reference_sets": 12,
-  "high_priority": 11
+  "estimated_reference_sets": 10,
+  "high_priority": 10
  },
  "warnings": [
   "/Shared/finance/seed_reference_data.sql: Some SQL could not be parsed; regex fallback used"

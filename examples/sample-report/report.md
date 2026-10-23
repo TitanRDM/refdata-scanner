@@ -1,12 +1,12 @@
 # Reference Data Scan
 
-_Platform: Local | Paths: examples/demo-workspace | Scanned: 2026-10-22 07:42 UTC_
+_Platform: Local | Paths: examples/demo-workspace | Scanned: 2026-10-23 04:08 UTC_
 
 ## At a glance
 
 | Measure | Count |
 |---|---:|
-| Reference data sets (estimated) | 12 |
+| Reference data sets (estimated) | 10 |
 | CSV / Excel files | 4 |
 | Lookup-table candidates | 0 |
 | Hardcoded lists & mappings | 12 |
@@ -38,31 +38,31 @@ Ranked by how likely each item is to be reference data and how much risk it carr
 
 | Score | Priority | Type | Where | What | Name | Why |
 |---|---|---|---|---|---|---|
-| 95 | High | File | /Repos/analytics/dbt_project/seeds/country_codes.csv | csv |  | dbt seed (reference data by definition); reference-data style name; small file |
 | 90 | High | File | /Shared/finance/gl_account_mapping.xlsx | xlsx |  | reference-data style name; read by 1 code location(s); small file; spreadsheet (likely maintained by hand) |
-| 84 | High | Code | /Repos/analytics/dbt_project/models/stg_customers.sql:14 | SQL CASE mapping | state_name | hardcoded mapping; reference-data style name; values look like codes; repeated in 4 places; copies disagree |
 | 84 | High | Code | /Shared/finance/finance_report.py:5 | Python dict (code -> label) | STATE_MAP | hardcoded mapping; reference-data style name; values look like codes; repeated in 4 places; copies disagree |
 | 84 | High | Code | /Users/jane.doe@contoso.com/sales_transform.py:10 | Python dict (code -> label) | STATE_MAP | hardcoded mapping; reference-data style name; values look like codes; repeated in 4 places; copies disagree |
 | 82 | High | Code | /Shared/finance/region_rollup.sql:23 | SQL INSERT ... VALUES inside spark.sql() | main.reference.currency | hardcoded mapping; reference-data style name; table contents maintained as literal VALUES in code; values look like codes; repeated in 2 places |
 | 82 | High | Code | /Shared/finance/seed_reference_data.sql:14 | SQL MERGE ... USING VALUES | main.finance.ref_currency | hardcoded mapping; reference-data style name; table contents maintained as literal VALUES in code; values look like codes; repeated in 2 places |
-| 80 | High | File | /FileStore/tables/cost_centres.csv | csv |  | reference-data style name; manual upload location; small file |
-| 80 | High | File | /FileStore/tables/product_categories.csv | csv |  | reference-data style name; manual upload location; small file |
-| 73 | High | Code | /Shared/finance/region_rollup.sql:12 | SQL CASE mapping | sales_region | hardcoded mapping; reference-data style name; values look like codes; repeated in 4 places |
+| 80 | High | File | /Repos/analytics/dbt_project/seeds/country_codes.csv | csv |  | dbt seed (reference data by definition); small file |
+| 69 | High | Code | /Repos/analytics/dbt_project/models/stg_customers.sql:14 | SQL CASE mapping | state_name | hardcoded mapping; values look like codes; repeated in 4 places; copies disagree |
 | 67 | High | Code | /Shared/finance/seed_reference_data.sql:5 | SQL INSERT ... VALUES | main.finance.ref_payment_terms | hardcoded mapping; reference-data style name; table contents maintained as literal VALUES in code; 5 separate statements; values look like codes |
-| 58 | Medium | Code | /Shared/finance/finance_report.py:30 | DataFrame built from literals | account_groups | hardcoded mapping; reference-data style name; values look like codes |
-| 57 | Medium | Code | /Repos/analytics/dbt_project/models/stg_customers.sql:11 | SQL CASE mapping | segment | hardcoded mapping; reference-data style name; values look like codes |
-| 57 | Medium | Code | /Users/jane.doe@contoso.com/sales_transform.py:31 | PySpark when() chain | channel | hardcoded mapping; reference-data style name; values look like codes |
-| 46 | Medium | Code | /Shared/finance/finance_report.py:16 | Python list | COST_CENTRES | hardcoded list; reference-data style name; values look like codes |
-| 46 | Medium | Code | /Users/jane.doe@contoso.com/sales_transform.py:49 | SQL IN (...) list | product_code | hardcoded list; reference-data style name; values look like codes |
+| 65 | High | File | /FileStore/tables/cost_centres.csv | csv |  | manual upload location; small file |
+| 65 | High | File | /FileStore/tables/product_categories.csv | csv |  | manual upload location; small file |
+| 58 | Medium | Code | /Shared/finance/region_rollup.sql:12 | SQL CASE mapping | sales_region | hardcoded mapping; values look like codes; repeated in 4 places |
+| 43 | Medium | Code | /Shared/finance/finance_report.py:30 | DataFrame built from literals | account_groups | hardcoded mapping; values look like codes |
+| 42 | Medium | Code | /Repos/analytics/dbt_project/models/stg_customers.sql:11 | SQL CASE mapping | segment | hardcoded mapping; values look like codes |
+| 42 | Medium | Code | /Users/jane.doe@contoso.com/sales_transform.py:31 | PySpark when() chain | channel | hardcoded mapping; values look like codes |
+| 31 | Low | Code | /Shared/finance/finance_report.py:16 | Python list | COST_CENTRES | hardcoded list; values look like codes |
+| 31 | Low | Code | /Users/jane.doe@contoso.com/sales_transform.py:49 | SQL IN (...) list | product_code | hardcoded list; values look like codes |
 
 ## CSV and Excel files
 
 | Score | Path | Size | Modified | Owner | Read by code | Loaded into |
 |---|---|---|---|---|---|---|
-| 95 | /Repos/analytics/dbt_project/seeds/country_codes.csv | 89 B | 2026-10-09 |  | - | - |
 | 90 | /Shared/finance/gl_account_mapping.xlsx | 5.2 KB | 2026-10-09 |  | 1 | - |
-| 80 | /FileStore/tables/cost_centres.csv | 79 B | 2026-10-09 |  | - | - |
-| 80 | /FileStore/tables/product_categories.csv | 50 B | 2026-10-09 |  | - | - |
+| 80 | /Repos/analytics/dbt_project/seeds/country_codes.csv | 89 B | 2026-10-09 |  | - | - |
+| 65 | /FileStore/tables/cost_centres.csv | 79 B | 2026-10-09 |  | - | - |
+| 65 | /FileStore/tables/product_categories.csv | 50 B | 2026-10-09 |  | - | - |
 
 ## Hardcoded reference data by pattern
 
@@ -82,18 +82,18 @@ Ranked by how likely each item is to be reference data and how much risk it carr
 
 | Score | Location | Pattern | Name | Items | Group | Sample |
 |---|---|---|---|---|---|---|
-| 84 | /Repos/analytics/dbt_project/models/stg_customers.sql:14 | SQL CASE mapping | state_name | 8 | G001 | NSW -> New South Wales, QLD -> Queensland, VIC -> Victoria, SA -> South Australia, WA -> Western Australia, ... (+3) |
 | 84 | /Shared/finance/finance_report.py:5 | Python dict (code -> label) | STATE_MAP | 8 | G001 | NSW -> New South Wales, QLD -> Queensland, VIC -> Victoria, SA -> South Australia, WA -> West Australia, ... (+3) |
 | 84 | /Users/jane.doe@contoso.com/sales_transform.py:10 | Python dict (code -> label) | STATE_MAP | 8 | G001 | NSW -> New South Wales, QLD -> Queensland, VIC -> Victoria, SA -> South Australia, WA -> Western Australia, ... (+3) |
 | 82 | /Shared/finance/region_rollup.sql:23 | SQL INSERT ... VALUES inside spark.sql() | main.reference.currency | 5 | G002 | AUD -> Australian Dollar, NZD -> New Zealand Dollar, USD -> US Dollar, EUR -> Euro, GBP -> Pound Sterling |
 | 82 | /Shared/finance/seed_reference_data.sql:14 | SQL MERGE ... USING VALUES | main.finance.ref_currency | 5 | G002 | AUD -> Australian Dollar, NZD -> New Zealand Dollar, USD -> US Dollar, EUR -> Euro, GBP -> Pound Sterling |
-| 73 | /Shared/finance/region_rollup.sql:12 | SQL CASE mapping | sales_region | 7 | G001 | NSW -> East, VIC -> East, QLD -> North, NT -> North, WA -> West, ... (+2) |
+| 69 | /Repos/analytics/dbt_project/models/stg_customers.sql:14 | SQL CASE mapping | state_name | 8 | G001 | NSW -> New South Wales, QLD -> Queensland, VIC -> Victoria, SA -> South Australia, WA -> Western Australia, ... (+3) |
 | 67 | /Shared/finance/seed_reference_data.sql:5 | SQL INSERT ... VALUES | main.finance.ref_payment_terms | 5 |  | COD -> Cash on delivery, N7 -> Net 7 days, N14 -> Net 14 days, N30 -> Net 30 days, EOM -> End of month |
-| 58 | /Shared/finance/finance_report.py:30 | DataFrame built from literals | account_groups | 6 |  | 4000 -> Revenue, 4100 -> Revenue, 5000 -> Cost of Sales, 6000 -> Operating Expenses, 6100 -> Operating Expenses, ... (+1) |
-| 57 | /Repos/analytics/dbt_project/models/stg_customers.sql:11 | SQL CASE mapping | segment | 5 |  | E -> Enterprise, M -> Mid-market, S -> Small business, C -> Consumer, G -> Government |
-| 57 | /Users/jane.doe@contoso.com/sales_transform.py:31 | PySpark when() chain | channel | 5 |  | 01 -> Retail, 02 -> Wholesale, 03 -> Online, 04 -> Marketplace, 05 -> Phone |
-| 46 | /Shared/finance/finance_report.py:16 | Python list | COST_CENTRES | 12 |  | CC100, CC110, CC120, CC130, CC200, ... (+7) |
-| 46 | /Users/jane.doe@contoso.com/sales_transform.py:49 | SQL IN (...) list | product_code | 12 |  | P100, P101, P102, P103, P104, ... (+7) |
+| 58 | /Shared/finance/region_rollup.sql:12 | SQL CASE mapping | sales_region | 7 | G001 | NSW -> East, VIC -> East, QLD -> North, NT -> North, WA -> West, ... (+2) |
+| 43 | /Shared/finance/finance_report.py:30 | DataFrame built from literals | account_groups | 6 |  | 4000 -> Revenue, 4100 -> Revenue, 5000 -> Cost of Sales, 6000 -> Operating Expenses, 6100 -> Operating Expenses, ... (+1) |
+| 42 | /Repos/analytics/dbt_project/models/stg_customers.sql:11 | SQL CASE mapping | segment | 5 |  | E -> Enterprise, M -> Mid-market, S -> Small business, C -> Consumer, G -> Government |
+| 42 | /Users/jane.doe@contoso.com/sales_transform.py:31 | PySpark when() chain | channel | 5 |  | 01 -> Retail, 02 -> Wholesale, 03 -> Online, 04 -> Marketplace, 05 -> Phone |
+| 31 | /Shared/finance/finance_report.py:16 | Python list | COST_CENTRES | 12 |  | CC100, CC110, CC120, CC130, CC200, ... (+7) |
+| 31 | /Users/jane.doe@contoso.com/sales_transform.py:49 | SQL IN (...) list | product_code | 12 |  | P100, P101, P102, P103, P104, ... (+7) |
 
 ## Hotspots by location
 

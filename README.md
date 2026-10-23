@@ -131,8 +131,8 @@ Each run writes a folder:
 | `summary.json` | Counts only, with no names, paths or values. Safe to share. |
 
 Every candidate gets a **score from 0 to 100** (High 60+, Medium 35-59, Low below 35) with the reasons spelled out:
-mappings and inline tables score higher than plain lists; reference-data style names (`_map`, `lookup`, `codes`,
-`status`, `region` ...), duplication, disagreeing copies, use in scheduled jobs, spreadsheets and manual upload
+mappings and inline tables score higher than plain lists; reference-data style names (a whole name part of
+`lkp`, `lu`, `lookup`, `ref`, `reference`, `refdata`, `map`, `mapping`, `xref`, `crosswalk` or `seed`), duplication, disagreeing copies, use in scheduled jobs, spreadsheets and manual upload
 locations all add to the score.
 
 Things that look like reference data but usually are not are **set aside, not hidden**: lists of column names

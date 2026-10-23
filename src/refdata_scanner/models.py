@@ -18,14 +18,7 @@ CODE_EXTENSIONS = (".py", ".sql", ".ipynb")
 
 # Words that suggest a name refers to reference data.
 REFDATA_NAME_HINTS = (
-    "map", "mapping", "lookup", "lkp", "lu_", "ref", "reference", "code",
-    "codes", "category", "categories", "type", "types", "status", "region",
-    "country", "countries", "state", "currency", "uom", "unit", "segment",
-    "hierarchy", "dim_", "dim", "xref", "crosswalk", "translation", "alias",
-    "classification", "group", "tier", "channel", "level", "list", "enum",
-    "seed", "master", "taxonomy", "rate", "account", "centre", "center", "department",
-    "dept", "division", "product", "brand", "site", "plant", "location", "calendar", "holiday",
-    "reason", "grade", "band", "rating", "scheme", "zone", "territory", "market",
+    "lkp", "lu", "lookup", "ref", "reference", "refdata", "map", "mapping", "mappings", "xref", "crosswalk", "seed",
 )
 
 

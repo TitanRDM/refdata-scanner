@@ -88,7 +88,7 @@ def test_combined_across_notebook_cells_and_spark_sql():
 
 def test_log_tables_are_noise_and_reference_loads_score_higher():
     log, = _loads("INSERT INTO main.ops.etl_audit_log VALUES ('a','b'), ('c','d'), ('e','f')")
-    ref, = _loads("INSERT INTO main.ops.order_status VALUES ('N','New'), ('S','Shipped'), ('D','Delivered')")
+    ref, = _loads("INSERT INTO main.ops.lkp_order_status VALUES ('N','New'), ('S','Shipped'), ('D','Delivered')")
     flag_noise([log, ref], set())
     assert log.likely_noise and not ref.likely_noise
     for f in (log, ref):
