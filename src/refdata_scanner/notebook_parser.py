@@ -2,7 +2,7 @@
 
 Supported formats:
 
-* Databricks SOURCE export (``# Databricks notebook source``) for Python, SQL,
+* Databricks SOURCE export (first line is the notebook header comment) for Python, SQL,
   Scala and R notebooks, including ``%sql`` / ``%python`` magic cells.
 * Jupyter ``.ipynb`` (Databricks, Fabric and Snowflake notebooks can all be
   exported as ipynb), including ``%%sql`` / ``%sql`` cell magics.
@@ -15,7 +15,10 @@ import re
 from dataclasses import dataclass
 from typing import List, Optional
 
-_HEADER_RE = re.compile(r"^(#|--|//)\s*Databricks notebook source\s*$")
+# The header that marks a Databricks source-format notebook. Built from parts on purpose: Databricks treats any
+# workspace .py file containing this phrase as a notebook, and then refuses to import it as a module.
+NOTEBOOK_HEADER = "Databricks " + "notebook " + "source"
+_HEADER_RE = re.compile(r"^(#|--|//)\s*" + NOTEBOOK_HEADER + r"\s*$")
 _SEPARATOR_RE = re.compile(r"^(#|--|//)\s*COMMAND -{5,}\s*$")
 _MAGIC_PREFIX_RE = re.compile(r"^(#|--|//)\s*MAGIC ?")
 

@@ -50,3 +50,13 @@ def test_zip_has_folder_entries(tmp_path):
         for i in range(1, len(parts) + 1):
             assert "/".join(parts[:i]) + "/" in folders, n
     assert names.index("refdata-scanner/lib/") < names.index("refdata-scanner/lib/THIRD_PARTY.md")
+
+
+def test_lib_files_are_not_mistaken_for_notebooks(tmp_path):
+    """Databricks treats a workspace .py file that mentions the notebook header phrase as a notebook, and then
+    refuses to import it as a module (NotebookImportException). No code file in lib/ may contain it."""
+    phrase = "notebook " + "source"
+    zf = zipfile.ZipFile(bundle.build_zip(str(tmp_path)))
+    offenders = [n for n in zf.namelist() if n.startswith("refdata-scanner/lib/") and n.endswith(".py")
+                 and phrase in zf.read(n).decode("utf-8", "replace").lower()]
+    assert not offenders, offenders

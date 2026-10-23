@@ -10,6 +10,7 @@ import os
 from typing import Any, Dict, Iterator, List, Optional
 
 from ..models import CODE_EXTENSIONS, CodeAsset, FileAsset
+from ..notebook_parser import NOTEBOOK_HEADER
 from .base import Logger, PlatformAdapter
 
 SKIP_DIRS = {".git", ".hg", ".svn", "node_modules", ".venv", "venv", "env", "__pycache__", ".tox", ".mypy_cache",
@@ -110,7 +111,7 @@ class LocalAdapter(PlatformAdapter):
             except OSError as exc:
                 self.warn(f"Could not read {path}: {exc}")
                 continue
-            kind = "notebook" if ext == ".ipynb" or content.lstrip().startswith(("# Databricks notebook source", "-- Databricks notebook source")) else "file"
+            kind = "notebook" if ext == ".ipynb" or content.lstrip().startswith((f"# {NOTEBOOK_HEADER}", f"-- {NOTEBOOK_HEADER}")) else "file"
             if ext == ".sql" and any(not os.path.relpath(path, r).startswith("..") for r in self._dbt_roots):
                 kind = "dbt_model"
             shown = self.display(path)
