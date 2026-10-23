@@ -131,17 +131,17 @@ sequences. They stay in `code_findings.csv` with a `noise_reason`.
 ## Safe by design
 
 - **Read-only.** The scanner lists and reads; it never creates, changes or deletes anything on your platform.
-- **Metadata and code only.** File contents are not read unless you turn on `inspect files`, and even then only the
+- **Metadata and code only.** CSV/Excel file contents are not read unless you turn on `inspect files`, and even then only the
   header row and a row estimate are kept.
 - **Nothing leaves your environment.** No telemetry and no downloads. The only network calls are to your own
   platform's APIs, using your own identity. The single exception is the optional `pip install` of the sqlglot SQL
-  parser when running from a Git folder (see above); the zip bundle never needs it. A test
+  parser when running from a Git folder (see above); A test
   (`tests/test_no_outbound_calls.py`) fails the build if any other route out is added.
 - **Your permissions.** It runs as you, so results only include what your account can see.
 - **Shareable output.** `--redact` (or the *Redact* widget) removes literal values, comments and user names from every
-  output, and `summary.json` never contains them.
+  output.
 - **Small and readable.** Plain Python. Its only dependencies are `sqlglot` (bundled) for SQL parsing and the
-  Databricks SDK that Databricks already provides. Read it before you run it.
+  Databricks SDK that Databricks already provides. 
 
 ## Thresholds
 
