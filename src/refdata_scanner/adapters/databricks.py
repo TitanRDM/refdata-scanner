@@ -50,11 +50,15 @@ OUTPUT_FOLDER_PREFIX = "refdata-scan-"  # folders the scanner writes its results
 
 
 def _ws_path(path: str) -> str:
-    """Workspace API paths have no /Workspace prefix: /Workspace/Users/x -> /Users/x."""
-    path = path.strip()
-    if path == "/Workspace":
+    """Normalise a user-typed workspace path for the Workspace API, which has no /Workspace prefix:
+    ' "/Workspace/Users/x/" ' -> /Users/x, 'Users/x' -> /Users/x."""
+    path = path.strip().strip("'\"").strip()
+    if not path.startswith("/"):
+        path = "/" + path
+    if path.rstrip("/") == "/Workspace":
         return "/"
-    return re.sub(r"^/Workspace(?=/)", "", path) or "/"
+    path = re.sub(r"^/Workspace(?=/)", "", path)
+    return path.rstrip("/") or "/"
 
 
 def _owner_from_path(path: str) -> Optional[str]:
@@ -180,6 +184,20 @@ class DatabricksAdapter(PlatformAdapter):
         return self._schemas_resolved
 
     # -------------------------------------------------------------- workspace
+    def check_workspace_paths(self) -> None:
+        """Stop with a clear message if a workspace folder to scan doesn't exist (usually a typo)."""
+        missing = []
+        for path in self.workspace_paths:
+            if path == "/":
+                continue
+            try:
+                self.w.workspace.get_status(path)
+            except Exception:
+                missing.append(path)
+        if missing:
+            raise ValueError("Workspace folder(s) not found or not accessible: " + ", ".join(missing)
+                             + ". Check the workspace_paths setting (e.g. /Users/you@company.com/project).")
+
     def _excluded(self, path: str) -> bool:
         """Excluded folders, plus this scanner's own output folders (refdata-scan-*) from earlier runs."""
         path = path.rstrip("/")

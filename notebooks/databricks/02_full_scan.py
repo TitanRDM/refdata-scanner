@@ -27,7 +27,9 @@
 # MAGIC
 # MAGIC **How to run:** attach to serverless or a Unity Catalog cluster (Databricks Runtime 15.4 LTS or later
 # MAGIC recommended), run the next cell to create the widgets, fill them in, then *Run all*.
-# MAGIC A typical workspace takes a few minutes.
+# MAGIC A typical workspace takes a few minutes. The first line the scan prints is the scope it is using (catalog,
+# MAGIC schemas, workspace folders, exclusions); check it matches your widgets. Tip: in the widget panel's settings,
+# MAGIC set *On widget change* to *Do nothing*, so editing a widget doesn't start a scan before you've finished.
 
 # COMMAND ----------
 

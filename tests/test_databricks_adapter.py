@@ -62,6 +62,11 @@ class FakeWorkspace:
             raise RuntimeError(f"RESOURCE_DOES_NOT_EXIST: {path}")
         return iter(self.tree[path])
 
+    def get_status(self, path):
+        if path not in self.tree and path not in self.content:
+            raise RuntimeError(f"RESOURCE_DOES_NOT_EXIST: {path}")
+        return path
+
     def export(self, path, format=None):
         return ExportResponse(content=base64.b64encode(self.content[path].encode()).decode())
 
@@ -218,3 +223,45 @@ def test_redacted_report_hides_values_and_names(tmp_path):
 def test_rejects_unsafe_catalog_name():
     with pytest.raises(ValueError):
         DatabricksAdapter(client=FakeClient(), catalog="main'; drop table x --")
+
+
+def test_scan_databricks_uses_workspace_paths_and_excludes(tmp_path):
+    from refdata_scanner import scan_databricks
+
+    paths = scan_databricks(client=FakeClient(), catalog="main", workspace_paths=['"/Workspace/Shared/" '],
+                            exclude_paths=["/Workspace/Users"], dbfs_paths=[], use_system_tables=False,
+                            out_dir=str(tmp_path), verbose=False)
+    findings = json.load(open(paths["findings"]))
+    assert findings["scope"]["workspace_paths"] == ["/Shared"]
+    sources = {f["source_path"] for f in findings["code_findings"]}
+    assert "/Shared/finance" in sources and not any(s.startswith("/Users/") for s in sources)
+    assert not any(f["area"] == "dbfs" for f in findings["files"])
+
+
+def test_missing_workspace_folder_stops_the_scan(tmp_path):
+    from refdata_scanner import scan_databricks
+
+    with pytest.raises(ValueError, match="/Users/nobody"):
+        scan_databricks(client=FakeClient(), workspace_paths=["/Users/nobody", "/Shared"], out_dir=str(tmp_path),
+                        verbose=False)
+
+
+def test_full_scan_notebook_only_passes_known_arguments():
+    """The notebook's scan_databricks(...) call must only use parameters the function accepts."""
+    import ast
+    import inspect
+
+    from refdata_scanner import scan_databricks
+    from refdata_scanner.notebook_parser import split_cells
+
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    source = open(os.path.join(root, "notebooks", "databricks", "02_full_scan.py"), encoding="utf-8").read()
+    accepted = set(inspect.signature(scan_databricks).parameters)
+    calls = []
+    for cell in split_cells("02_full_scan.py", source, "python"):
+        for node in ast.walk(ast.parse(cell.source)):
+            if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "scan_databricks":
+                calls.append({k.arg for k in node.keywords})
+    assert calls, "scan_databricks call not found in the notebook"
+    for used in calls:
+        assert used <= accepted, used - accepted

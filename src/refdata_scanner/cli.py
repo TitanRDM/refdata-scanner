@@ -103,6 +103,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             exclude_paths=args.exclude_paths, dbfs_paths=[] if args.no_dbfs else args.dbfs_paths,
             include_queries=not args.no_queries, include_jobs=not args.no_jobs,
             use_system_tables=not args.no_system_tables, sql_runner=runner, history_days=args.history_days, log=log)
+        adapter.check_workspace_paths()
     else:
         from .adapters.local import LocalAdapter
 
